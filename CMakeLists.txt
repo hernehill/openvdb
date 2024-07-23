@@ -109,7 +109,7 @@ located openvdb build configuration to decide on log4cplus support. You may set 
 to be used if you know it to be required.]=] OFF)
 option(USE_EXR [=[
 Use OpenEXR while building openvdb components. If enabled, this also switches USE_IMATH_HALF to ON unless
-it too was provided and set to OFF.]=] OFF)
+it too was provided and set to OFF.]=] ON)  # Marcelo: was OFF
 option(USE_IMATH_HALF [=[
 Use the definiton of half floating point types from the Imath library. If OFF, the embedded definition provided
 by OpenVDB is used. If OPENVDB_BUILD_CORE is OFF, CMake attempts to query the located openvdb build configuration
