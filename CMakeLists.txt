@@ -68,7 +68,7 @@ include(GNUInstallDirs)
 # HH
 # -------------------------------------------
 set(HH_USE_PYTHON ON)
-if(DEFINE ENV{REZ_PYTHON_ROOT})
+if(DEFINED ENV{REZ_PYTHON_ROOT})
   if($ENV{REZ_PYTHON_MAJOR_VERSION} EQUAL "3")
     if($ENV{REZ_PYTHON_MINOR_VERSION} EQUAL "7")
       set(HH_USE_PYTHON OFF)
