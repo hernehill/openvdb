@@ -1,7 +1,7 @@
 name = "openvdb"
 
 # version 11.0.0 is used by Houdini 20.5.278
-version = "11.0.0.hh.1.0.0"
+version = "11.0.0.hh.1.1.0"
 
 authors = [
     "DreamWorks & AcademySoftwareFoundation",
@@ -19,18 +19,24 @@ requires = [
     "tbb-2020",
     "boost-1.82",
     "openexr-3.1.12",
-    # "pybind11",  # only required if building with Python
-    # "numpy",  # only required if building with Python
+    "pybind11",  # only required if building with Python
+    "numpy",  # only required if building with Python
 ]
 
 private_build_requires = []
 
 
-# NOTE: We could build against Python versions, to have 'pyopenvdb' available.
-# Unfortunately, openvdb 11+ requires python 3.9.1+ and we still want python 3.7
-# for Nuke 13. Once Python 3.7 is not a requirement anymore, we can build for all
-# Python versions.
-variants = []
+# NOTE: openvdb 11+ requires Python 3.9+. Although we are building a REZ variant
+# for Python 3.7, we will disable the 'OPENVDB_BUILD_PYTHON_MODULE' CMake option
+# within CMakeLists.txt. This is so we can still have this openvdb version available
+# for Python 3.7, but without 'pyopenvdb' support.
+variants = [
+    ["python-3.7"],
+    ["python-3.9"],
+    ["python-3.10"],
+    ["python-3.11"],
+    ["python-3.12"],
+]
 
 
 def commands():
