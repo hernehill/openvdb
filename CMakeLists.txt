@@ -64,10 +64,21 @@ project(OpenVDB LANGUAGES CXX VERSION ${OpenVDB_VERSION})
 include(CMakeDependentOption)
 include(GNUInstallDirs)
 
+# -------------------------------------------
+# HH
+# -------------------------------------------
+set(HH_USE_PYTHON ON)
+if(DEFINE ENV{REZ_PYTHON_ROOT})
+  if($ENV{REZ_PYTHON_MAJOR_VERSION} EQUAL "3")
+    if($ENV{REZ_PYTHON_MINOR_VERSION} EQUAL "7")
+      set(HH_USE_PYTHON OFF)
+# -------------------------------------------
+
+
 # todo epydoc and pdflatex
 option(OPENVDB_BUILD_CORE "Enable the core OpenVDB library. Both static and shared versions are enabled by default" ON)
 option(OPENVDB_BUILD_BINARIES "Enable the vdb binaries. Only vdb_print is enabled by default" ON)
-option(OPENVDB_BUILD_PYTHON_MODULE "Build the pyopenvdb Python module" OFF)
+option(OPENVDB_BUILD_PYTHON_MODULE "Build the pyopenvdb Python module" ${HH_USE_PYTHON})  # Marcelo: was OFF
 option(OPENVDB_BUILD_UNITTESTS "Build the OpenVDB unit tests" OFF)
 option(OPENVDB_BUILD_DOCS "Build the OpenVDB documentation" OFF)
 option(OPENVDB_BUILD_HOUDINI_PLUGIN "Build the Houdini plugin" OFF)
