@@ -61,8 +61,5 @@ def commands():
             elif python_ver.minor == 12:
                 env.PYTHONPATH.append("{root}/lib64/python3.12/site-packages")
 
-    if building:
-        env.CMAKE_MODULE_PATH.append("{root}/lib64/cmake/OpenVDB")
-
 
 uuid = "repository.openvdb"
