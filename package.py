@@ -1,7 +1,7 @@
 name = "openvdb"
 
 # version 11.0.0 is used by Houdini 20.5.278
-version = "11.0.0.hh.1.1.0"
+version = "11.0.0.hh.1.2.0"
 
 authors = [
     "DreamWorks & AcademySoftwareFoundation",
@@ -20,7 +20,6 @@ requires = [
     "boost-1.82",
     "openexr-3.1.12",
     "pybind11",  # only required if building with Python
-    "numpy",  # only required if building with Python
 ]
 
 private_build_requires = []
@@ -31,11 +30,11 @@ private_build_requires = []
 # within CMakeLists.txt. This is so we can still have this openvdb version available
 # for Python 3.7, but without 'pyopenvdb' support.
 variants = [
-    ["python-3.7"],
-    ["python-3.9"],
-    ["python-3.10"],
-    ["python-3.11"],
-    ["python-3.12"],
+    ["python-3.7", "numpy-1.21.6"],
+    ["python-3.9", "numpy-1.26.4"],
+    ["python-3.10", "numpy-1.26.4"],
+    ["python-3.11", "numpy-1.26.4"],
+    ["python-3.12", "numpy-1.26.4"],
 ]
 
 
