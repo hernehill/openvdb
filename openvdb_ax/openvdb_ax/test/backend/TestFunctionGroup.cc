@@ -5,7 +5,7 @@
 
 #include <openvdb_ax/codegen/FunctionTypes.h>
 
-#include <cppunit/extensions/HelperMacros.h>
+#include <gtest/gtest.h>
 
 #include <llvm/Config/llvm-config.h>
 
@@ -98,26 +98,11 @@ axtestmulti(llvm::LLVMContext& C)
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-class TestFunctionGroup : public CppUnit::TestCase
+class TestFunctionGroup : public ::testing::Test
 {
-public:
-
-    // Test FunctionGroup signature matching and execution errors
-    CPPUNIT_TEST_SUITE(TestFunctionGroup);
-    CPPUNIT_TEST(testFunctionGroup);
-    CPPUNIT_TEST(testMatch);
-    CPPUNIT_TEST(testExecute);
-    CPPUNIT_TEST_SUITE_END();
-
-    void testFunctionGroup();
-    void testMatch();
-    void testExecute();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(TestFunctionGroup);
-
-void
-TestFunctionGroup::testFunctionGroup()
+TEST_F(TestFunctionGroup, testFunctionGroup)
 {
     using openvdb::ax::codegen::Function;
     using openvdb::ax::codegen::FunctionGroup;
@@ -137,12 +122,12 @@ TestFunctionGroup::testFunctionGroup()
             decl1, decl2, decl3
          }));
 
-    CPPUNIT_ASSERT_EQUAL(std::string("test"), std::string(group->name()));
-    CPPUNIT_ASSERT_EQUAL(std::string("The documentation"), std::string(group->doc()));
-    CPPUNIT_ASSERT_EQUAL(size_t(3), group->list().size());
-    CPPUNIT_ASSERT_EQUAL(decl1, group->list()[0]);
-    CPPUNIT_ASSERT_EQUAL(decl2, group->list()[1]);
-    CPPUNIT_ASSERT_EQUAL(decl3, group->list()[2]);
+    ASSERT_EQ(std::string("test"), std::string(group->name()));
+    ASSERT_EQ(std::string("The documentation"), std::string(group->doc()));
+    ASSERT_EQ(size_t(3), group->list().size());
+    ASSERT_EQ(decl1, group->list()[0]);
+    ASSERT_EQ(decl2, group->list()[1]);
+    ASSERT_EQ(decl3, group->list()[2]);
 }
 
 #if LLVM_VERSION_MAJOR <= 15
@@ -169,49 +154,49 @@ TestFunctionGroup::testMatch()
     types.resize(1);
     types[0] = llvm::Type::getInt1Ty(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[5].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[5].get()), result);
 
     //
 
     types[0] = llvm::Type::getInt16Ty(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[4].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[4].get()), result);
 
     //
 
     types[0] = llvm::Type::getInt32Ty(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[3].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[3].get()), result);
 
     //
 
     types[0] = llvm::Type::getInt64Ty(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[2].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[2].get()), result);
 
     //
 
     types[0] = llvm::Type::getFloatTy(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[1].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[1].get()), result);
 
     //
 
     types[0] = llvm::Type::getDoubleTy(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[0].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[0].get()), result);
 
     // test unsigned integers automatic type creation - these are not supported in the
     // language however can be constructed from the API. The function framework does
@@ -219,18 +204,18 @@ TestFunctionGroup::testMatch()
 
     types[0] = LLVMType<uint64_t>::get(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[2].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[2].get()), result);
 
     // test implicit matching - types should match to the first available castable signature
     // which is always the void(double) "tsfd" function for all provided scalars
 
     types[0] = llvm::Type::getInt8Ty(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Implicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[0].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Implicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[0].get()), result);
 
     types.clear();
 
@@ -238,33 +223,33 @@ TestFunctionGroup::testMatch()
     // the size
 
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT_EQUAL(Function::SignatureMatch::None, match);
-    CPPUNIT_ASSERT(!result);
+    ASSERT_EQ(Function::SignatureMatch::None, match);
+    ASSERT_TRUE(!result);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::None == match);
-    CPPUNIT_ASSERT(!result);
+    ASSERT_TRUE(Function::SignatureMatch::None == match);
+    ASSERT_TRUE(!result);
 
     //
 
     types.emplace_back(llvm::Type::getInt1Ty(C)->getPointerTo());
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Size == match);
-    CPPUNIT_ASSERT(!result);
+    ASSERT_TRUE(Function::SignatureMatch::Size == match);
+    ASSERT_TRUE(!result);
 
     //
 
     types[0] = llvm::ArrayType::get(llvm::Type::getInt1Ty(C), 1);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Size == match);
-    CPPUNIT_ASSERT(!result);
+    ASSERT_TRUE(Function::SignatureMatch::Size == match);
+    ASSERT_TRUE(!result);
 
     //
 
     types[0] = llvm::Type::getInt1Ty(C);
     types.emplace_back(llvm::Type::getInt1Ty(C));
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::None == match);
-    CPPUNIT_ASSERT(!result);
+    ASSERT_TRUE(Function::SignatureMatch::None == match);
+    ASSERT_TRUE(!result);
 
     //
     // Test varying argument size function
@@ -277,26 +262,26 @@ TestFunctionGroup::testMatch()
     types[0] = llvm::Type::getDoubleTy(C);
     types[1] = llvm::Type::getDoubleTy(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[2].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[2].get()), result);
 
     //
 
     types.resize(1);
     types[0] = llvm::Type::getDoubleTy(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[1].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[1].get()), result);
 
     //
 
     types.clear();
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[0].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[0].get()), result);
 
     // Test implicit matching
 
@@ -305,9 +290,9 @@ TestFunctionGroup::testMatch()
     types[0] = llvm::Type::getFloatTy(C);
     types[1] = llvm::Type::getInt32Ty(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Implicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[2].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Implicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[2].get()), result);
 
     // Test non matching
 
@@ -317,8 +302,8 @@ TestFunctionGroup::testMatch()
     types[1] = llvm::Type::getDoubleTy(C);
     types[2] = llvm::Type::getDoubleTy(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::None == match);
-    CPPUNIT_ASSERT(!result);
+    ASSERT_TRUE(Function::SignatureMatch::None == match);
+    ASSERT_TRUE(!result);
 
     //
     // Test multi function
@@ -331,9 +316,9 @@ TestFunctionGroup::testMatch()
     types.clear();
 
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[0].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[0].get()), result);
 
     //
 
@@ -341,27 +326,27 @@ TestFunctionGroup::testMatch()
     types[0] = llvm::Type::getDoubleTy(C);
     types[1] = llvm::Type::getDoubleTy(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[2].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[2].get()), result);
 
     //
 
     types[0] = llvm::Type::getInt32Ty(C);
     types[1] = llvm::Type::getDoubleTy(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[3].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[3].get()), result);
 
     //
 
     types[0] = llvm::Type::getInt32Ty(C);
     types[1] = llvm::Type::getInt32Ty(C);
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Implicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[2].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Implicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[2].get()), result);
 
     //
 
@@ -369,17 +354,17 @@ TestFunctionGroup::testMatch()
 
     types[0] = llvm::ArrayType::get(llvm::Type::getInt32Ty(C), 1)->getPointerTo();
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[5].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[5].get()), result);
 
     //
 
     types[0] = llvm::ArrayType::get(llvm::Type::getInt32Ty(C), 2)->getPointerTo();
     result = group->match(types, C, &match);
-    CPPUNIT_ASSERT(Function::SignatureMatch::Explicit == match);
-    CPPUNIT_ASSERT(result);
-    CPPUNIT_ASSERT_EQUAL(const_cast<const Function*>((*list)[6].get()), result);
+    ASSERT_TRUE(Function::SignatureMatch::Explicit == match);
+    ASSERT_TRUE(result);
+    ASSERT_EQ(const_cast<const Function*>((*list)[6].get()), result);
 }
 
 #else

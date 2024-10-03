@@ -99,7 +99,6 @@ TEST_F(TestCodecs, testRegisteredCodecs)
         for (const auto& F : decoder->list()) {
             // check the function takes 2 arguments (in/out)
             // @note  This could change in the future e.g. a value is returned
-<<<<<<< HEAD
             CPPUNIT_ASSERT_EQUAL(F->size(), size_t(2)); // input/output
             openvdb::ax::codegen::ArgInfoVector types;
             openvdb::ax::codegen::ArgInfo ret = F->types(types, C);
@@ -108,22 +107,11 @@ TEST_F(TestCodecs, testRegisteredCodecs)
             // signature should be unqiue
             CPPUNIT_ASSERT(std::find(decoderSignatures.begin(), decoderSignatures.end(), types) == decoderSignatures.end());
             decoderSignatures.emplace_back(types);
-=======
-            ASSERT_EQ(F->size(), size_t(2)); // input/output
-            std::vector<llvm::Type*> types;
-            llvm::Type* ret = F->types(types, C);
-            // currently expect codecs to ret void
-            ASSERT_EQ(ret, codegen::LLVMType<void>::get(C));
-            // signature should be unqiue
-            ASSERT_TRUE(!decoderSignatures.count(types));
-            decoderSignatures.insert(types);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         }
 
         for (const auto& F : encoder->list()) {
             // check the function takes 2 arguments (in/out)
             // @note  This could change in the future e.g. a value is returned
-<<<<<<< HEAD
             CPPUNIT_ASSERT_EQUAL(F->size(), size_t(2)); // input/output
             openvdb::ax::codegen::ArgInfoVector types;
             openvdb::ax::codegen::ArgInfo ret = F->types(types, C);
@@ -132,16 +120,6 @@ TEST_F(TestCodecs, testRegisteredCodecs)
             // signature should be unqiue
             CPPUNIT_ASSERT(std::find(encoderSignatures.begin(), encoderSignatures.end(), types) == encoderSignatures.end());
             encoderSignatures.emplace_back(types);
-=======
-            ASSERT_EQ(F->size(), size_t(2)); // input/output
-            std::vector<llvm::Type*> types;
-            llvm::Type* ret = F->types(types, C);
-            // currently expect codecs to ret void
-            ASSERT_EQ(ret, codegen::LLVMType<void>::get(C));
-            // signature should be unqiue
-            ASSERT_TRUE(!encoderSignatures.count(types));
-            encoderSignatures.insert(types);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         }
 
         ASSERT_TRUE(!encoderSignatures.empty());
@@ -193,11 +171,7 @@ TEST_F(TestCodecs, testRegisteredCodecs)
         for (const auto& types : decoderSignatures) {
             openvdb::ax::codegen::ArgInfoVector rev = types;
             std::reverse(rev.begin(), rev.end());
-<<<<<<< HEAD
             CPPUNIT_ASSERT(std::find(encoderSignatures.begin(), encoderSignatures.end(), rev) != encoderSignatures.end());
-=======
-            ASSERT_TRUE(encoderSignatures.find(rev) != encoderSignatures.end());
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         }
     }
 }
@@ -220,17 +194,10 @@ TEST_F(TestCodecs, testTruncateCodec)
     llvm::Type* halfty = codegen::LLVMType<HalfTy>::get(state.context());
     llvm::Type* vhalfty = codegen::LLVMType<math::Vec3<HalfTy>>::get(state.context());
 
-<<<<<<< HEAD
     CPPUNIT_ASSERT_EQUAL(halfty,  codec->decodedToEncoded(ast::tokens::CoreType::FLOAT, state.context()));
     CPPUNIT_ASSERT_EQUAL(vhalfty, codec->decodedToEncoded(ast::tokens::CoreType::VEC3F, state.context()));
     CPPUNIT_ASSERT_EQUAL(floatty,  codec->encodedToDecoded(halfty));
     CPPUNIT_ASSERT_EQUAL(vfloatty, codec->encodedToDecoded(vhalfty));
-=======
-    ASSERT_EQ(halfty,  codec->decodedToEncoded(ast::tokens::CoreType::FLOAT, C));
-    ASSERT_EQ(vhalfty, codec->decodedToEncoded(ast::tokens::CoreType::VEC3F, C));
-    ASSERT_EQ(floatty,  codec->encodedToDecoded(halfty));
-    ASSERT_EQ(vfloatty, codec->encodedToDecoded(vhalfty));
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
 
     // JIT the codec and test the IR
 
@@ -241,19 +208,11 @@ TEST_F(TestCodecs, testTruncateCodec)
     ASSERT_TRUE(!encoder->list().empty());
     ASSERT_TRUE(!decoder->list().empty());
 
-<<<<<<< HEAD
     for (auto& F : encoder->list()) CPPUNIT_ASSERT(F->create(state.module()));
     for (auto& F : decoder->list()) CPPUNIT_ASSERT(F->create(state.module()));
 
     // Module and context are invalid after this
     state.CreateEE();
-=======
-    for (auto& F : encoder->list()) ASSERT_TRUE(F->create(M));
-    for (auto& F : decoder->list()) ASSERT_TRUE(F->create(M));
-
-    auto EE = state.EE();
-    ASSERT_TRUE(EE);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
 
     // test truncate encoders
 
@@ -275,13 +234,8 @@ TEST_F(TestCodecs, testTruncateCodec)
     };
 
     {
-<<<<<<< HEAD
         const int64_t address = state.GetGlobalAddress(encoder->list()[0]->symbol());
         CPPUNIT_ASSERT(address);
-=======
-        const int64_t address = EE->getFunctionAddress(encoder->list()[0]->symbol());
-        ASSERT_TRUE(address);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         const auto truncEncodeFloatToHalf = reinterpret_cast<std::add_pointer<FloatToHalf>::type>(address);
 
         HalfTy result1, result2;
@@ -297,13 +251,8 @@ TEST_F(TestCodecs, testTruncateCodec)
     }
 
     {
-<<<<<<< HEAD
         const int64_t address = state.GetGlobalAddress(encoder->list()[5]->symbol());
         CPPUNIT_ASSERT(address);
-=======
-        const int64_t address = EE->getFunctionAddress(encoder->list()[5]->symbol());
-        ASSERT_TRUE(address);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         const auto truncEncodeVecFloatToHalf = reinterpret_cast<std::add_pointer<VFloatToHalf>::type>(address);
 
         math::Vec3<HalfTy> result1, result2;
@@ -338,13 +287,8 @@ TEST_F(TestCodecs, testTruncateCodec)
     };
 
     {
-<<<<<<< HEAD
         const int64_t address = state.GetGlobalAddress(decoder->list()[0]->symbol());
         CPPUNIT_ASSERT(address);
-=======
-        const int64_t address = EE->getFunctionAddress(decoder->list()[0]->symbol());
-        ASSERT_TRUE(address);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         const auto truncDecodeHalfToFloat = reinterpret_cast<std::add_pointer<HalfToFloat>::type>(address);
 
         float result1, result2;
@@ -360,13 +304,8 @@ TEST_F(TestCodecs, testTruncateCodec)
     }
 
     {
-<<<<<<< HEAD
         const int64_t address = state.GetGlobalAddress(decoder->list()[5]->symbol());
         CPPUNIT_ASSERT(address);
-=======
-        const int64_t address = EE->getFunctionAddress(decoder->list()[5]->symbol());
-        ASSERT_TRUE(address);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         const auto truncDecodeVecHalfToFloat = reinterpret_cast<std::add_pointer<VHalfToFloat>::type>(address);
 
         math::Vec3<float> result1, result2;
@@ -399,7 +338,6 @@ void testFxptCodec()
     llvm::Type* floatty = codegen::LLVMType<float>::get(state.context());
     llvm::Type* vfloatty = codegen::LLVMType<math::Vec3<float>>::get(state.context());
 
-<<<<<<< HEAD
     CPPUNIT_ASSERT(nullptr == codec->decodedToEncoded(ast::tokens::CoreType::INT32, state.context()));
     CPPUNIT_ASSERT(nullptr == codec->decodedToEncoded(ast::tokens::CoreType::VEC2F, state.context()));
     CPPUNIT_ASSERT(nullptr == codec->decodedToEncoded(ast::tokens::CoreType::STRING, state.context()));
@@ -407,15 +345,6 @@ void testFxptCodec()
     CPPUNIT_ASSERT_EQUAL(vuintty, codec->decodedToEncoded(ast::tokens::CoreType::VEC3F, state.context()));
     CPPUNIT_ASSERT_EQUAL(floatty,  codec->encodedToDecoded(uintty));
     CPPUNIT_ASSERT_EQUAL(vfloatty, codec->encodedToDecoded(vuintty));
-=======
-    ASSERT_TRUE(nullptr == codec->decodedToEncoded(ast::tokens::CoreType::INT32, C));
-    ASSERT_TRUE(nullptr == codec->decodedToEncoded(ast::tokens::CoreType::VEC2F, C));
-    ASSERT_TRUE(nullptr == codec->decodedToEncoded(ast::tokens::CoreType::STRING, C));
-    ASSERT_EQ(uintty,  codec->decodedToEncoded(ast::tokens::CoreType::FLOAT, C));
-    ASSERT_EQ(vuintty, codec->decodedToEncoded(ast::tokens::CoreType::VEC3F, C));
-    ASSERT_EQ(floatty,  codec->encodedToDecoded(uintty));
-    ASSERT_EQ(vfloatty, codec->encodedToDecoded(vuintty));
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
 
     // JIT the codec and test the IR
 
@@ -428,19 +357,11 @@ void testFxptCodec()
     ASSERT_EQ(encoder->list().size(), size_t(2));
     ASSERT_EQ(decoder->list().size(), size_t(2));
 
-<<<<<<< HEAD
     for (auto& F : encoder->list()) CPPUNIT_ASSERT(F->create(state.module()));
     for (auto& F : decoder->list()) CPPUNIT_ASSERT(F->create(state.module()));
 
     // Module and context are invalid after this
     state.CreateEE();
-=======
-    for (auto& F : encoder->list()) ASSERT_TRUE(F->create(M));
-    for (auto& F : decoder->list()) ASSERT_TRUE(F->create(M));
-
-    auto EE = state.EE();
-    ASSERT_TRUE(EE);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
 
     // test truncate encoders
 
@@ -464,13 +385,8 @@ void testFxptCodec()
     };
 
     {
-<<<<<<< HEAD
         const int64_t address = state.GetGlobalAddress(encoder->list()[0]->symbol());
         CPPUNIT_ASSERT(address);
-=======
-        const int64_t address = EE->getFunctionAddress(encoder->list()[0]->symbol());
-        ASSERT_TRUE(address);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         const auto fxptEncodeFloat = reinterpret_cast<FloatToFxpt>(address);
 
         IntT result1, result2;
@@ -486,13 +402,8 @@ void testFxptCodec()
     }
 
     {
-<<<<<<< HEAD
         const int64_t address = state.GetGlobalAddress(encoder->list()[1]->symbol());
         CPPUNIT_ASSERT(address);
-=======
-        const int64_t address = EE->getFunctionAddress(encoder->list()[1]->symbol());
-        ASSERT_TRUE(address);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         const auto fxptEncodeVFloat = reinterpret_cast<VFloatToFxpt>(address);
 
         math::Vec3<IntT> result1, result2;
@@ -531,13 +442,8 @@ void testFxptCodec()
     };
 
     {
-<<<<<<< HEAD
         const int64_t address = state.GetGlobalAddress(decoder->list()[0]->symbol());
         CPPUNIT_ASSERT(address);
-=======
-        const int64_t address = EE->getFunctionAddress(decoder->list()[0]->symbol());
-        ASSERT_TRUE(address);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         const auto fxptDecodeUint8 = reinterpret_cast<FxptToFloat>(address);
 
         float result1, result2;
@@ -553,13 +459,8 @@ void testFxptCodec()
     }
 
     {
-<<<<<<< HEAD
         const int64_t address = state.GetGlobalAddress(decoder->list()[1]->symbol());
         CPPUNIT_ASSERT(address);
-=======
-        const int64_t address = EE->getFunctionAddress(decoder->list()[1]->symbol());
-        ASSERT_TRUE(address);
->>>>>>> 5c2f8e80 (Convert TestCodecs.cc from cppunit to gtest)
         const auto fxptDecodeVuint8 = reinterpret_cast<VFxptToFloat>(address);
 
         math::Vec3<float> result1, result2;
