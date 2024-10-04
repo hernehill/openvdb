@@ -6,7 +6,7 @@
 #include <openvdb_ax/codegen/LegacyIR.h>
 #include <openvdb_ax/codegen/FunctionTypes.h>
 
-#include <cppunit/extensions/HelperMacros.h>
+#include <gtest/gtest.h>
 
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/raw_ostream.h>
@@ -123,20 +123,20 @@ finalizeFunction(llvm::IRBuilder<>& B, llvm::Function* F = nullptr)
 #define VERIFY_FUNCTION_IR(Function) { \
     std::string error; llvm::raw_string_ostream os(error); \
     const bool valid = !llvm::verifyFunction(*Function, &os); \
-    CPPUNIT_ASSERT_MESSAGE(os.str(), valid); \
+    ASSERT_TRUE(valid) << os.str(); \
 }
 #define VERIFY_MODULE_IR(Module) { \
     std::string error; llvm::raw_string_ostream os(error); \
     const bool valid = !llvm::verifyModule(*Module, &os); \
-    CPPUNIT_ASSERT_MESSAGE(os.str(), valid); \
+    ASSERT_TRUE(valid) << os.str(); \
 }
 #define VERIFY_MODULE_IR_INVALID(Module) { \
     const bool valid = llvm::verifyModule(*Module); \
-    CPPUNIT_ASSERT_MESSAGE("Expected IR to be invalid!", valid); \
+    ASSERT_TRUE(valid) << "Expected IR to be invalid!"; \
 }
 #define VERIFY_FUNCTION_IR_INVALID(Function) { \
     const bool valid = llvm::verifyFunction(*Function); \
-    CPPUNIT_ASSERT_MESSAGE("Expected IR to be invalid!", valid); \
+    ASSERT_TRUE(valid) << "Expected IR to be invalid!"; \
 }
 
 inline auto getNumArgFromCallInst(llvm::CallInst* CI)
@@ -152,7 +152,7 @@ inline auto getNumArgFromCallInst(llvm::CallInst* CI)
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-class TestFunctionTypes : public CppUnit::TestCase
+class TestFunctionTypes : public ::testing::Test
 {
 public:
 
@@ -190,10 +190,7 @@ public:
     void testSRETFunctions();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(TestFunctionTypes);
-
-void
-TestFunctionTypes::testLLVMTypesFromSignature()
+TEST_F(TestFunctionTypes, testLLVMTypesFromSignature)
 {
     using openvdb::ax::codegen::llvmTypesFromSignature;
 
@@ -202,32 +199,32 @@ TestFunctionTypes::testLLVMTypesFromSignature()
     std::vector<llvm::Type*> types;
 
     type = llvmTypesFromSignature<void()>(state.context());
-    CPPUNIT_ASSERT(type);
-    CPPUNIT_ASSERT(type->isVoidTy());
+    ASSERT_TRUE(type);
+    ASSERT_TRUE(type->isVoidTy());
 
     type = llvmTypesFromSignature<void()>(state.context(), &types);
-    CPPUNIT_ASSERT(type);
-    CPPUNIT_ASSERT(type->isVoidTy());
-    CPPUNIT_ASSERT(types.empty());
+    ASSERT_TRUE(type);
+    ASSERT_TRUE(type->isVoidTy());
+    ASSERT_TRUE(types.empty());
 
     type = llvmTypesFromSignature<float()>(state.context(), &types);
-    CPPUNIT_ASSERT(type);
-    CPPUNIT_ASSERT(type->isFloatTy());
-    CPPUNIT_ASSERT(types.empty());
+    ASSERT_TRUE(type);
+    ASSERT_TRUE(type->isFloatTy());
+    ASSERT_TRUE(types.empty());
 
     type = llvmTypesFromSignature<float(double, int64_t, float(*)[3])>(state.context(), &types);
 
-    CPPUNIT_ASSERT(type);
-    CPPUNIT_ASSERT(type->isFloatTy());
-    CPPUNIT_ASSERT_EQUAL(size_t(3), types.size());
-    CPPUNIT_ASSERT(types[0]->isDoubleTy());
-    CPPUNIT_ASSERT(types[1]->isIntegerTy(64));
-    CPPUNIT_ASSERT(types[2]->isPointerTy());
+    ASSERT_TRUE(type);
+    ASSERT_TRUE(type->isFloatTy());
+    ASSERT_EQ(size_t(3), types.size());
+    ASSERT_TRUE(types[0]->isDoubleTy());
+    ASSERT_TRUE(types[1]->isIntegerTy(64));
+    ASSERT_TRUE(types[2]->isPointerTy());
 
 #if LLVM_VERSION_MAJOR <= 15
     type = types[2]->getPointerElementType();
-    CPPUNIT_ASSERT(type);
-    CPPUNIT_ASSERT(type->isArrayTy());
+    ASSERT_TRUE(type);
+    ASSERT_TRUE(type->isArrayTy());
     type = type->getArrayElementType();
     CPPUNIT_ASSERT(type);
     CPPUNIT_ASSERT(type->isFloatTy());
@@ -283,8 +280,7 @@ TestFunctionTypes::testArgInfoTypesFromSignature()
     CPPUNIT_ASSERT(types[2].GetUnderlyingType()->getArrayElementType()->isFloatTy());
 }
 
-void
-TestFunctionTypes::testLLVMFunctionTypeFromSignature()
+TEST_F(TestFunctionTypes, testLLVMFunctionTypeFromSignature)
 {
     using openvdb::ax::codegen::llvmFunctionTypeFromSignature;
 
@@ -292,31 +288,30 @@ TestFunctionTypes::testLLVMFunctionTypeFromSignature()
     llvm::FunctionType* ftype = nullptr;
 
     ftype = llvmFunctionTypeFromSignature<void()>(state.context());
-    CPPUNIT_ASSERT(ftype);
-    CPPUNIT_ASSERT(ftype->getReturnType()->isVoidTy());
-    CPPUNIT_ASSERT_EQUAL(0u, ftype->getNumParams());
+    ASSERT_TRUE(ftype);
+    ASSERT_TRUE(ftype->getReturnType()->isVoidTy());
+    ASSERT_EQ(0u, ftype->getNumParams());
 
     ftype = llvmFunctionTypeFromSignature<float(double, int64_t, float(*)[3])>(state.context());
 
-    CPPUNIT_ASSERT(ftype);
-    CPPUNIT_ASSERT(ftype->getReturnType()->isFloatTy());
-    CPPUNIT_ASSERT_EQUAL(3u, ftype->getNumParams());
-    CPPUNIT_ASSERT(ftype->getParamType(0)->isDoubleTy());
-    CPPUNIT_ASSERT(ftype->getParamType(1)->isIntegerTy(64));
-    CPPUNIT_ASSERT(ftype->getParamType(2)->isPointerTy());
+    ASSERT_TRUE(ftype);
+    ASSERT_TRUE(ftype->getReturnType()->isFloatTy());
+    ASSERT_EQ(3u, ftype->getNumParams());
+    ASSERT_TRUE(ftype->getParamType(0)->isDoubleTy());
+    ASSERT_TRUE(ftype->getParamType(1)->isIntegerTy(64));
+    ASSERT_TRUE(ftype->getParamType(2)->isPointerTy());
 
 #if LLVM_VERSION_MAJOR <= 15
     llvm::Type* type = ftype->getParamType(2)->getPointerElementType();
-    CPPUNIT_ASSERT(type);
-    CPPUNIT_ASSERT(type->isArrayTy());
+    ASSERT_TRUE(type);
+    ASSERT_TRUE(type->isArrayTy());
     type = type->getArrayElementType();
     CPPUNIT_ASSERT(type);
     CPPUNIT_ASSERT(type->isFloatTy());
 #endif
 }
 
-void
-TestFunctionTypes::testPrintSignature()
+TEST_F(TestFunctionTypes, testPrintSignature)
 {
     using openvdb::ax::codegen::printSignature;
     using openvdb::ax::codegen::ArgInfoVector;
@@ -338,37 +333,37 @@ TestFunctionTypes::testPrintSignature()
     std::ostringstream os;
 
     printSignature(os, types, vt);
-    CPPUNIT_ASSERT(os.str() == "void()");
+    ASSERT_TRUE(os.str() == "void()");
     os.str("");
 
     types.emplace_back(llvm::Type::getInt32Ty(C));
     types.emplace_back(llvm::Type::getInt64Ty(C));
     printSignature(os, types, vt);
-    CPPUNIT_ASSERT_EQUAL(std::string("void(i32; i64)"), os.str());
+    ASSERT_EQ(std::string("void(i32; i64)"), os.str());
     os.str("");
 
     printSignature(os, types, vt, "test");
-    CPPUNIT_ASSERT_EQUAL(std::string("void test(i32; i64)"), os.str());
+    ASSERT_EQ(std::string("void test(i32; i64)"), os.str());
     os.str("");
 
     printSignature(os, types, vt, "", {"one"}, true);
-    CPPUNIT_ASSERT_EQUAL(std::string("void(int32 one; int64)"), os.str());
+    ASSERT_EQ(std::string("void(int32 one; int64)"), os.str());
     os.str("");
 
     printSignature(os, types, vt, "", {"one", "two"}, true);
-    CPPUNIT_ASSERT_EQUAL(std::string("void(int32 one; int64 two)"), os.str());
+    ASSERT_EQ(std::string("void(int32 one; int64 two)"), os.str());
     os.str("");
 
     printSignature(os, types, vt, "1", {"one", "two", "three"}, true);
-    CPPUNIT_ASSERT_EQUAL(std::string("void 1(int32 one; int64 two)"), os.str());
+    ASSERT_EQ(std::string("void 1(int32 one; int64 two)"), os.str());
     os.str("");
 
     printSignature(os, types, vt, "1", {"", "two"}, false);
-    CPPUNIT_ASSERT_EQUAL(std::string("void 1(i32; i64 two)"), os.str());
+    ASSERT_EQ(std::string("void 1(i32; i64 two)"), os.str());
     os.str("");
 
     printSignature(os, types, vt, "1", {"", "two"}, false);
-    CPPUNIT_ASSERT_EQUAL(std::string("void 1(i32; i64 two)"), os.str());
+    ASSERT_EQ(std::string("void 1(i32; i64 two)"), os.str());
     os.str("");
 
 #if LLVM_VERSION_MAJOR <= 15
@@ -393,8 +388,8 @@ TestFunctionTypes::testPrintSignature()
     os.str("");
 }
 
-void
-TestFunctionTypes::testFunctionCreate()
+// Test Function::create, Function::types and other base methods
+TEST_F(TestFunctionTypes, testFunctionCreate)
 {
     using openvdb::ax::codegen::Function;
     using openvdb::ax::codegen::ArgInfo;
@@ -430,53 +425,53 @@ TestFunctionTypes::testFunctionCreate()
     CPPUNIT_ASSERT(type.IsReturn());
 #endif
     // test various getters
-    CPPUNIT_ASSERT_EQUAL(std::string("ax.test"), std::string(test->symbol()));
-    CPPUNIT_ASSERT_EQUAL(size_t(1), test->size());
-    CPPUNIT_ASSERT_EQUAL(std::string(""), std::string(test->argName(0)));
-    CPPUNIT_ASSERT_EQUAL(std::string(""), std::string(test->argName(1)));
+    ASSERT_EQ(std::string("ax.test"), std::string(test->symbol()));
+    ASSERT_EQ(size_t(1), test->size());
+    ASSERT_EQ(std::string(""), std::string(test->argName(0)));
+    ASSERT_EQ(std::string(""), std::string(test->argName(1)));
 
     // test create detached
     llvm::Function* function = test->create(C);
     llvm::Function* function2 = test->create(C);
     // additional create call should create a new function
-    CPPUNIT_ASSERT(function != function2);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(!function->isVarArg());
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT_EQUAL(size_t(1), function->arg_size());
+    ASSERT_TRUE(function != function2);
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(!function->isVarArg());
+    ASSERT_TRUE(function->empty());
+    ASSERT_EQ(size_t(1), function->arg_size());
 
     llvm::FunctionType* ftype = function->getFunctionType();
-    CPPUNIT_ASSERT(ftype);
-    CPPUNIT_ASSERT(ftype->getReturnType()->isVoidTy());
-    CPPUNIT_ASSERT_EQUAL(1u, ftype->getNumParams());
-    CPPUNIT_ASSERT(ftype->getParamType(0)->isIntegerTy(32));
-    CPPUNIT_ASSERT(function->getAttributes().isEmpty());
+    ASSERT_TRUE(ftype);
+    ASSERT_TRUE(ftype->getReturnType()->isVoidTy());
+    ASSERT_EQ(1u, ftype->getNumParams());
+    ASSERT_TRUE(ftype->getParamType(0)->isIntegerTy(32));
+    ASSERT_TRUE(function->getAttributes().isEmpty());
     delete function;
     delete function2;
 
     // test create with a module (same as above, but check inserted into M)
-    CPPUNIT_ASSERT(!M.getFunction("ax.test"));
+    ASSERT_TRUE(!M.getFunction("ax.test"));
     function = test->create(M);
     // additional call should match
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(M.getFunction("ax.test"));
-    CPPUNIT_ASSERT_EQUAL(function, M.getFunction("ax.test"));
-    CPPUNIT_ASSERT(!function->isVarArg());
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT_EQUAL(size_t(1), function->arg_size());
+    ASSERT_EQ(function, test->create(M));
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(M.getFunction("ax.test"));
+    ASSERT_EQ(function, M.getFunction("ax.test"));
+    ASSERT_TRUE(!function->isVarArg());
+    ASSERT_TRUE(function->empty());
+    ASSERT_EQ(size_t(1), function->arg_size());
 
     ftype = function->getFunctionType();
-    CPPUNIT_ASSERT(ftype);
-    CPPUNIT_ASSERT(ftype->getReturnType()->isVoidTy());
-    CPPUNIT_ASSERT_EQUAL(1u, ftype->getNumParams());
-    CPPUNIT_ASSERT(ftype->getParamType(0)->isIntegerTy(32));
-    CPPUNIT_ASSERT(function->getAttributes().isEmpty());
+    ASSERT_TRUE(ftype);
+    ASSERT_TRUE(ftype->getReturnType()->isVoidTy());
+    ASSERT_EQ(1u, ftype->getNumParams());
+    ASSERT_TRUE(ftype->getParamType(0)->isIntegerTy(32));
+    ASSERT_TRUE(function->getAttributes().isEmpty());
 
     // test print
     os.str("");
     test->print(C, os, "name", /*axtypes=*/true);
-    CPPUNIT_ASSERT_EQUAL(std::string("void name(int32)"), os.str());
+    ASSERT_EQ(std::string("void name(int32)"), os.str());
 
     //
     // Test empty signature
@@ -494,36 +489,36 @@ TestFunctionTypes::testFunctionCreate()
     CPPUNIT_ASSERT(type.GetType()->isIntegerTy(32));
 #endif
     // test various getters
-    CPPUNIT_ASSERT_EQUAL(std::string("ax.empty.test"), std::string(test->symbol()));
-    CPPUNIT_ASSERT_EQUAL(size_t(0), test->size());
-    CPPUNIT_ASSERT_EQUAL(std::string(""), std::string(test->argName(0)));
+    ASSERT_EQ(std::string("ax.empty.test"), std::string(test->symbol()));
+    ASSERT_EQ(size_t(0), test->size());
+    ASSERT_EQ(std::string(""), std::string(test->argName(0)));
 
     // test create detached
     function = test->create(C);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(!function->isVarArg());
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT_EQUAL(size_t(0), function->arg_size());
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(!function->isVarArg());
+    ASSERT_TRUE(function->empty());
+    ASSERT_EQ(size_t(0), function->arg_size());
 
     ftype = function->getFunctionType();
-    CPPUNIT_ASSERT(ftype);
-    CPPUNIT_ASSERT(ftype->getReturnType()->isIntegerTy(32));
-    CPPUNIT_ASSERT_EQUAL(0u, ftype->getNumParams());
-    CPPUNIT_ASSERT(function->getAttributes().isEmpty());
+    ASSERT_TRUE(ftype);
+    ASSERT_TRUE(ftype->getReturnType()->isIntegerTy(32));
+    ASSERT_EQ(0u, ftype->getNumParams());
+    ASSERT_TRUE(function->getAttributes().isEmpty());
     delete function;
 
     // test create with a module (same as above, but check inserted into M)
-    CPPUNIT_ASSERT(!M.getFunction("ax.empty.test"));
+    ASSERT_TRUE(!M.getFunction("ax.empty.test"));
     function = test->create(M);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(M.getFunction("ax.empty.test"));
-    CPPUNIT_ASSERT_EQUAL(function, M.getFunction("ax.empty.test"));
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(M.getFunction("ax.empty.test"));
+    ASSERT_EQ(function, M.getFunction("ax.empty.test"));
+    ASSERT_EQ(function, test->create(M));
 
     // test print
     os.str("");
     test->print(C, os, "name", /*axtypes=*/true);
-    CPPUNIT_ASSERT_EQUAL(std::string("int32 name()"), os.str());
+    ASSERT_EQ(std::string("int32 name()"), os.str());
 
     //
     // Test scalar types
@@ -539,7 +534,7 @@ TestFunctionTypes::testFunctionCreate()
         ArgInfo(llvm::Type::getInt16Ty(C)), "ax.scalars.test"));
     types.clear();
 
-    CPPUNIT_ASSERT_EQUAL(std::string("ax.scalars.test"), std::string(test->symbol()));
+    ASSERT_EQ(std::string("ax.scalars.test"), std::string(test->symbol()));
 
     type = test->types(types, state.context());
     CPPUNIT_ASSERT_EQUAL(size_t(6), types.size());
@@ -564,36 +559,36 @@ TestFunctionTypes::testFunctionCreate()
 
     // test create detached
     function = test->create(C);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(!function->isVarArg());
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT_EQUAL(size_t(6), function->arg_size());
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(!function->isVarArg());
+    ASSERT_TRUE(function->empty());
+    ASSERT_EQ(size_t(6), function->arg_size());
 
     ftype = function->getFunctionType();
-    CPPUNIT_ASSERT(ftype);
-    CPPUNIT_ASSERT(ftype->getReturnType()->isIntegerTy(16));
-    CPPUNIT_ASSERT_EQUAL(6u, ftype->getNumParams());
-    CPPUNIT_ASSERT(ftype->getParamType(0)->isIntegerTy(1));
-    CPPUNIT_ASSERT(ftype->getParamType(1)->isIntegerTy(16));
-    CPPUNIT_ASSERT(ftype->getParamType(2)->isIntegerTy(32));
-    CPPUNIT_ASSERT(ftype->getParamType(3)->isIntegerTy(64));
-    CPPUNIT_ASSERT(ftype->getParamType(4)->isFloatTy());
-    CPPUNIT_ASSERT(ftype->getParamType(5)->isDoubleTy());
-    CPPUNIT_ASSERT(function->getAttributes().isEmpty());
+    ASSERT_TRUE(ftype);
+    ASSERT_TRUE(ftype->getReturnType()->isIntegerTy(16));
+    ASSERT_EQ(6u, ftype->getNumParams());
+    ASSERT_TRUE(ftype->getParamType(0)->isIntegerTy(1));
+    ASSERT_TRUE(ftype->getParamType(1)->isIntegerTy(16));
+    ASSERT_TRUE(ftype->getParamType(2)->isIntegerTy(32));
+    ASSERT_TRUE(ftype->getParamType(3)->isIntegerTy(64));
+    ASSERT_TRUE(ftype->getParamType(4)->isFloatTy());
+    ASSERT_TRUE(ftype->getParamType(5)->isDoubleTy());
+    ASSERT_TRUE(function->getAttributes().isEmpty());
     delete function;
 
     // test create with a module (same as above, but check inserted into M)
-    CPPUNIT_ASSERT(!M.getFunction("ax.scalars.test"));
+    ASSERT_TRUE(!M.getFunction("ax.scalars.test"));
     function = test->create(M);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(M.getFunction("ax.scalars.test"));
-    CPPUNIT_ASSERT_EQUAL(function, M.getFunction("ax.scalars.test"));
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(M.getFunction("ax.scalars.test"));
+    ASSERT_EQ(function, M.getFunction("ax.scalars.test"));
+    ASSERT_EQ(function, test->create(M));
 
     // test print
     os.str("");
     test->print(C, os, "name", /*axtypes=*/true);
-    CPPUNIT_ASSERT_EQUAL(std::string("int16 name(bool; int16; int32; int64; float; double)"), os.str());
+    ASSERT_EQ(std::string("int16 name(bool; int16; int32; int64; float; double)"), os.str());
 
     types.clear();
 
@@ -610,7 +605,7 @@ TestFunctionTypes::testFunctionCreate()
         },
         ArgInfo(llvm::Type::getInt32Ty(C)), "ax.scalarptrs.test"));
 
-    CPPUNIT_ASSERT_EQUAL(std::string("ax.scalarptrs.test"), std::string(test->symbol()));
+    ASSERT_EQ(std::string("ax.scalarptrs.test"), std::string(test->symbol()));
 
     type = test->types(types, C);
     CPPUNIT_ASSERT_EQUAL(size_t(6), types.size());
@@ -640,10 +635,10 @@ TestFunctionTypes::testFunctionCreate()
 
     // test create detached
     function = test->create(C);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(!function->isVarArg());
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT_EQUAL(size_t(6), function->arg_size());
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(!function->isVarArg());
+    ASSERT_TRUE(function->empty());
+    ASSERT_EQ(size_t(6), function->arg_size());
 
     ftype = function->getFunctionType();
     CPPUNIT_ASSERT(ftype);
@@ -659,12 +654,12 @@ TestFunctionTypes::testFunctionCreate()
     delete function;
 
     // test create with a module (same as above, but check inserted into M)
-    CPPUNIT_ASSERT(!M.getFunction("ax.scalarptrs.test"));
+    ASSERT_TRUE(!M.getFunction("ax.scalarptrs.test"));
     function = test->create(M);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(M.getFunction("ax.scalarptrs.test"));
-    CPPUNIT_ASSERT_EQUAL(function, M.getFunction("ax.scalarptrs.test"));
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(M.getFunction("ax.scalarptrs.test"));
+    ASSERT_EQ(function, M.getFunction("ax.scalarptrs.test"));
+    ASSERT_EQ(function, test->create(M));
 
     //
     // Test array ptrs types
@@ -744,10 +739,10 @@ TestFunctionTypes::testFunctionCreate()
 
     // test create detached
     function = test->create(C);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(!function->isVarArg());
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT_EQUAL(size_t(15), function->arg_size());
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(!function->isVarArg());
+    ASSERT_TRUE(function->empty());
+    ASSERT_EQ(size_t(15), function->arg_size());
 
     ftype = function->getFunctionType();
     CPPUNIT_ASSERT(ftype);
@@ -772,12 +767,12 @@ TestFunctionTypes::testFunctionCreate()
     delete function;
 
     // test create with a module (same as above, but check inserted into M)
-    CPPUNIT_ASSERT(!M.getFunction("ax.arrayptrs.test"));
+    ASSERT_TRUE(!M.getFunction("ax.arrayptrs.test"));
     function = test->create(M);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(M.getFunction("ax.arrayptrs.test"));
-    CPPUNIT_ASSERT_EQUAL(function, M.getFunction("ax.arrayptrs.test"));
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(M.getFunction("ax.arrayptrs.test"));
+    ASSERT_EQ(function, M.getFunction("ax.arrayptrs.test"));
+    ASSERT_EQ(function, test->create(M));
 
     // test print - note mat/i types are not ax types
     os.str("");
@@ -838,10 +833,10 @@ TestFunctionTypes::testFunctionCreate()
 
     // test create detached
     function = test->create(C);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(!function->isVarArg());
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT_EQUAL(size_t(6), function->arg_size());
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(!function->isVarArg());
+    ASSERT_TRUE(function->empty());
+    ASSERT_EQ(size_t(6), function->arg_size());
 
     ftype = function->getFunctionType();
     CPPUNIT_ASSERT(ftype);
@@ -857,57 +852,57 @@ TestFunctionTypes::testFunctionCreate()
     delete function;
 
     // test create with a module (same as above, but check inserted into M)
-    CPPUNIT_ASSERT(!M.getFunction("ax.vptrs.test"));
+    ASSERT_TRUE(!M.getFunction("ax.vptrs.test"));
     function = test->create(M);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(M.getFunction("ax.vptrs.test"));
-    CPPUNIT_ASSERT_EQUAL(function, M.getFunction("ax.vptrs.test"));
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(M.getFunction("ax.vptrs.test"));
+    ASSERT_EQ(function, M.getFunction("ax.vptrs.test"));
+    ASSERT_EQ(function, test->create(M));
 
     //
     // Test creation with builder methods
     // @note  These methods may be moved to the constructor in the future
 
-    CPPUNIT_ASSERT(test->dependencies().empty());
-    CPPUNIT_ASSERT(!test->hasParamAttribute(0, llvm::Attribute::ReadOnly));
-    CPPUNIT_ASSERT(!test->hasParamAttribute(-1, llvm::Attribute::ReadOnly));
+    ASSERT_TRUE(test->dependencies().empty());
+    ASSERT_TRUE(!test->hasParamAttribute(0, llvm::Attribute::ReadOnly));
+    ASSERT_TRUE(!test->hasParamAttribute(-1, llvm::Attribute::ReadOnly));
 
     test->setDependencies({"dep"});
-    CPPUNIT_ASSERT_EQUAL(size_t(1), test->dependencies().size());
-    CPPUNIT_ASSERT_EQUAL(std::string("dep"), std::string(test->dependencies().front()));
+    ASSERT_EQ(size_t(1), test->dependencies().size());
+    ASSERT_EQ(std::string("dep"), std::string(test->dependencies().front()));
 
     test->setDependencies({});
-    CPPUNIT_ASSERT(test->dependencies().empty());
+    ASSERT_TRUE(test->dependencies().empty());
 
     test->setFnAttributes({llvm::Attribute::ReadOnly});
     test->setRetAttributes({llvm::Attribute::NoAlias});
     test->setParamAttributes(1, {llvm::Attribute::WriteOnly});
     test->setParamAttributes(-1, {llvm::Attribute::WriteOnly});
 
-    CPPUNIT_ASSERT(!test->hasParamAttribute(0, llvm::Attribute::WriteOnly));
-    CPPUNIT_ASSERT(!test->hasParamAttribute(2, llvm::Attribute::WriteOnly));
-    CPPUNIT_ASSERT(test->hasParamAttribute(1, llvm::Attribute::WriteOnly));
-    CPPUNIT_ASSERT(test->hasParamAttribute(-1, llvm::Attribute::WriteOnly));
+    ASSERT_TRUE(!test->hasParamAttribute(0, llvm::Attribute::WriteOnly));
+    ASSERT_TRUE(!test->hasParamAttribute(2, llvm::Attribute::WriteOnly));
+    ASSERT_TRUE(test->hasParamAttribute(1, llvm::Attribute::WriteOnly));
+    ASSERT_TRUE(test->hasParamAttribute(-1, llvm::Attribute::WriteOnly));
 
     function = test->create(C);
-    CPPUNIT_ASSERT(function);
+    ASSERT_TRUE(function);
     llvm::AttributeList list = function->getAttributes();
-    CPPUNIT_ASSERT(!list.isEmpty());
-    CPPUNIT_ASSERT(!list.hasParamAttrs(0));
-    CPPUNIT_ASSERT(!list.hasParamAttrs(2));
-    CPPUNIT_ASSERT(list.hasParamAttr(1, llvm::Attribute::WriteOnly));
+    ASSERT_TRUE(!list.isEmpty());
+    ASSERT_TRUE(!list.hasParamAttrs(0));
+    ASSERT_TRUE(!list.hasParamAttrs(2));
+    ASSERT_TRUE(list.hasParamAttr(1, llvm::Attribute::WriteOnly));
 #if LLVM_VERSION_MAJOR <= 13
-    CPPUNIT_ASSERT(list.hasFnAttribute(llvm::Attribute::ReadOnly));
-    CPPUNIT_ASSERT(list.hasAttribute(llvm::AttributeList::ReturnIndex, llvm::Attribute::NoAlias));
+    ASSERT_TRUE(list.hasFnAttribute(llvm::Attribute::ReadOnly));
+    ASSERT_TRUE(list.hasAttribute(llvm::AttributeList::ReturnIndex, llvm::Attribute::NoAlias));
 #else
-    CPPUNIT_ASSERT(list.hasFnAttr(llvm::Attribute::ReadOnly));
-    CPPUNIT_ASSERT(list.hasRetAttr(llvm::Attribute::NoAlias));
+    ASSERT_TRUE(list.hasFnAttr(llvm::Attribute::ReadOnly));
+    ASSERT_TRUE(list.hasRetAttr(llvm::Attribute::NoAlias));
 #endif
     delete function;
 }
 
-void
-TestFunctionTypes::testFunctionCall()
+// Test Function::call
+TEST_F(TestFunctionTypes, testFunctionCall)
 {
     using openvdb::ax::codegen::Function;
     using openvdb::ax::codegen::LLVMType;
@@ -934,12 +929,12 @@ TestFunctionTypes::testFunctionCall()
         llvm::Value* result = test->call({arg}, B);
         CPPUNIT_ASSERT(result);
         llvm::CallInst* call = llvm::dyn_cast<llvm::CallInst>(result);
-        CPPUNIT_ASSERT(call);
-        CPPUNIT_ASSERT_EQUAL(function, call->getCalledFunction());
-        CPPUNIT_ASSERT_EQUAL(1u, getNumArgFromCallInst(call));
-        CPPUNIT_ASSERT_EQUAL(arg, call->getArgOperand(0));
+        ASSERT_TRUE(call);
+        ASSERT_EQ(function, call->getCalledFunction());
+        ASSERT_EQ(1u, getNumArgFromCallInst(call));
+        ASSERT_EQ(arg, call->getArgOperand(0));
         // Test the builder is pointing to the correct location
-        CPPUNIT_ASSERT_EQUAL(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
+        ASSERT_EQ(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
 
         // add a ret void to the current function and to the created function,
         // then check the IR is valid (this will check the function arguments
@@ -966,14 +961,14 @@ TestFunctionTypes::testFunctionCall()
         llvm::Value* arg = B.getInt32(1);
         llvm::Value* result = test->call({arg}, B);
         llvm::Function* function = test->create(M);
-        CPPUNIT_ASSERT(result);
+        ASSERT_TRUE(result);
         llvm::CallInst* call = llvm::dyn_cast<llvm::CallInst>(result);
-        CPPUNIT_ASSERT(call);
-        CPPUNIT_ASSERT_EQUAL(function, call->getCalledFunction());
-        CPPUNIT_ASSERT_EQUAL(1u, getNumArgFromCallInst(call));
-        CPPUNIT_ASSERT_EQUAL(arg, call->getArgOperand(0));
+        ASSERT_TRUE(call);
+        ASSERT_EQ(function, call->getCalledFunction());
+        ASSERT_EQ(1u, getNumArgFromCallInst(call));
+        ASSERT_EQ(arg, call->getArgOperand(0));
         // Test the builder is pointing to the correct location
-        CPPUNIT_ASSERT_EQUAL(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
+        ASSERT_EQ(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
 
         // add a ret void to the current function and to the created function,
         // then check the IR is valid (this will check the function arguments
@@ -1603,8 +1598,8 @@ TestFunctionTypes::testFunctionCall()
     }
 }
 
-void
-TestFunctionTypes::testFunctionMatch()
+// Test Function::match
+TEST_F(TestFunctionTypes, testFunctionMatch)
 {
     using openvdb::ax::codegen::Function;
     using openvdb::ax::codegen::LLVMType;
@@ -1716,7 +1711,7 @@ TestFunctionTypes::testFunctionMatch()
         "ax.test"));
 
     match = test->match(types, C);
-    CPPUNIT_ASSERT_EQUAL(match, Function::Explicit);
+    ASSERT_EQ(match, Function::Explicit);
 
     // test size match
 
@@ -1725,7 +1720,7 @@ TestFunctionTypes::testFunctionMatch()
         ArgInfo(llvm::Type::getVoidTy(C)), "ax.test"));
 #if LLVM_VERSION_MAJOR <= 15
     match = test->match({llvm::ArrayType::get(i32t, 1)->getPointerTo()}, C);
-    CPPUNIT_ASSERT_EQUAL(match, Function::Size);
+    ASSERT_EQ(match, Function::Size);
     match = test->match({i32t->getPointerTo()}, C);
     CPPUNIT_ASSERT_EQUAL(match, Function::Size);
 #endif
@@ -1757,13 +1752,13 @@ TestFunctionTypes::testFunctionMatch()
         ArgInfoVector copy(scalars);
         copy[i] = copy.back();
         copy.pop_back();
-        CPPUNIT_ASSERT_EQUAL(size_t(5), copy.size());
-        CPPUNIT_ASSERT_EQUAL(Function::Explicit, test->match({scalars[i]}, C));
-        CPPUNIT_ASSERT_EQUAL(Function::Implicit, test->match({copy[0]}, C));
-        CPPUNIT_ASSERT_EQUAL(Function::Implicit, test->match({copy[1]}, C));
-        CPPUNIT_ASSERT_EQUAL(Function::Implicit, test->match({copy[2]}, C));
-        CPPUNIT_ASSERT_EQUAL(Function::Implicit, test->match({copy[3]}, C));
-        CPPUNIT_ASSERT_EQUAL(Function::Implicit, test->match({copy[4]}, C));
+        ASSERT_EQ(size_t(5), copy.size());
+        ASSERT_EQ(Function::Explicit, test->match({scalars[i]}, C));
+        ASSERT_EQ(Function::Implicit, test->match({copy[0]}, C));
+        ASSERT_EQ(Function::Implicit, test->match({copy[1]}, C));
+        ASSERT_EQ(Function::Implicit, test->match({copy[2]}, C));
+        ASSERT_EQ(Function::Implicit, test->match({copy[3]}, C));
+        ASSERT_EQ(Function::Implicit, test->match({copy[4]}, C));
    }
 
    //
@@ -1776,16 +1771,16 @@ TestFunctionTypes::testFunctionMatch()
             ArgInfoVector copy(types);
             copy[i] = copy.back();
             copy.pop_back();
-            CPPUNIT_ASSERT_EQUAL(size_t(2), copy.size());
-            CPPUNIT_ASSERT_EQUAL(Function::Explicit, test->match({types[i]}, C));
-            CPPUNIT_ASSERT_EQUAL(Function::Size, test->match({copy[0]}, C));
-            CPPUNIT_ASSERT_EQUAL(Function::Size, test->match({copy[1]}, C));
+            ASSERT_EQ(size_t(2), copy.size());
+            ASSERT_EQ(Function::Explicit, test->match({types[i]}, C));
+            ASSERT_EQ(Function::Size, test->match({copy[0]}, C));
+            ASSERT_EQ(Function::Size, test->match({copy[1]}, C));
 
             // test non matching size arrays
             for (const ArgInfoVector& inputs : arrays) {
                 if (&types == &inputs) continue;
                 for (size_t i = 0; i < inputs.size(); ++i) {
-                    CPPUNIT_ASSERT_EQUAL(Function::Size, test->match({inputs[i]}, C));
+                    ASSERT_EQ(Function::Size, test->match({inputs[i]}, C));
                 }
             }
         }
@@ -1802,16 +1797,16 @@ TestFunctionTypes::testFunctionMatch()
             ArgInfoVector copy(types);
             copy[i] = copy.back();
             copy.pop_back();
-            CPPUNIT_ASSERT_EQUAL(size_t(2), copy.size());
-            CPPUNIT_ASSERT_EQUAL(Function::Explicit, test->match({types[i]}, C));
-            CPPUNIT_ASSERT_EQUAL(Function::Implicit, test->match({copy[0]}, C));
-            CPPUNIT_ASSERT_EQUAL(Function::Implicit, test->match({copy[1]}, C));
+            ASSERT_EQ(size_t(2), copy.size());
+            ASSERT_EQ(Function::Explicit, test->match({types[i]}, C));
+            ASSERT_EQ(Function::Implicit, test->match({copy[0]}, C));
+            ASSERT_EQ(Function::Implicit, test->match({copy[1]}, C));
 
             // test non matching size arrays
             for (const ArgInfoVector& inputs : arrays) {
                 if (&types == &inputs) continue;
                 for (size_t i = 0; i < inputs.size(); ++i) {
-                    CPPUNIT_ASSERT_EQUAL(Function::Size, test->match({inputs[i]}, C));
+                    ASSERT_EQ(Function::Size, test->match({inputs[i]}, C));
                 }
             }
         }
@@ -1859,8 +1854,8 @@ TestFunctionTypes::testFunctionMatch()
     }
 }
 
-void
-TestFunctionTypes::testCFunctions()
+// Test derived CFunctions, mainly CFunction::create and CFunction::types
+TEST_F(TestFunctionTypes, testCFunctions)
 {
     using openvdb::ax::codegen::CFunction;
     using openvdb::ax::codegen::ArgInfo;
@@ -1889,50 +1884,50 @@ TestFunctionTypes::testCFunctions()
 
     // test static void function
 
-    CPPUNIT_ASSERT_EQUAL(size_t(0), voidfunc.size());
-    CPPUNIT_ASSERT_EQUAL(reinterpret_cast<uint64_t>(&CBindings::voidfunc),
+    ASSERT_EQ(size_t(0), voidfunc.size());
+    ASSERT_EQ(reinterpret_cast<uint64_t>(&CBindings::voidfunc),
         voidfunc.address());
-    CPPUNIT_ASSERT_EQUAL(std::string("voidfunc"),
+    ASSERT_EQ(std::string("voidfunc"),
         std::string(voidfunc.symbol()));
 
     // test scalar arguments
 
-    CPPUNIT_ASSERT_EQUAL(size_t(6), scalars.size());
-    CPPUNIT_ASSERT_EQUAL(reinterpret_cast<uint64_t>(&CBindings::scalarfunc),
+    ASSERT_EQ(size_t(6), scalars.size());
+    ASSERT_EQ(reinterpret_cast<uint64_t>(&CBindings::scalarfunc),
         scalars.address());
-    CPPUNIT_ASSERT_EQUAL(std::string("scalarfunc"),
+    ASSERT_EQ(std::string("scalarfunc"),
         std::string(scalars.symbol()));
 
     // test scalar ptr arguments
 
-    CPPUNIT_ASSERT_EQUAL(size_t(6), scalarptrs.size());
-    CPPUNIT_ASSERT_EQUAL(reinterpret_cast<uint64_t>(&CBindings::scalatptsfunc),
+    ASSERT_EQ(size_t(6), scalarptrs.size());
+    ASSERT_EQ(reinterpret_cast<uint64_t>(&CBindings::scalatptsfunc),
         scalarptrs.address());
-    CPPUNIT_ASSERT_EQUAL(std::string("scalatptsfunc"),
+    ASSERT_EQ(std::string("scalatptsfunc"),
         std::string(scalarptrs.symbol()));
 
     // test array ptr arguments
 
-    CPPUNIT_ASSERT_EQUAL(size_t(6), arrayptrs.size());
-    CPPUNIT_ASSERT_EQUAL(reinterpret_cast<uint64_t>(&CBindings::arrayfunc),
+    ASSERT_EQ(size_t(6), arrayptrs.size());
+    ASSERT_EQ(reinterpret_cast<uint64_t>(&CBindings::arrayfunc),
         arrayptrs.address());
-    CPPUNIT_ASSERT_EQUAL(std::string("arrayfunc"),
+    ASSERT_EQ(std::string("arrayfunc"),
         std::string(arrayptrs.symbol()));
 
     // test selected template functions
 
-    CPPUNIT_ASSERT_EQUAL(size_t(0), select.size());
-    CPPUNIT_ASSERT_EQUAL(reinterpret_cast<uint64_t>(&CBindings::tmplfunc<float>),
+    ASSERT_EQ(size_t(0), select.size());
+    ASSERT_EQ(reinterpret_cast<uint64_t>(&CBindings::tmplfunc<float>),
         select.address());
-    CPPUNIT_ASSERT_EQUAL(std::string("tmplfunc"),
+    ASSERT_EQ(std::string("tmplfunc"),
         std::string(select.symbol()));
 
     // test multiple indirection layers
 
-    CPPUNIT_ASSERT_EQUAL(size_t(6), mindirect.size());
-    CPPUNIT_ASSERT_EQUAL(reinterpret_cast<uint64_t>(&CBindings::multiptrfunc),
+    ASSERT_EQ(size_t(6), mindirect.size());
+    ASSERT_EQ(reinterpret_cast<uint64_t>(&CBindings::multiptrfunc),
         mindirect.address());
-    CPPUNIT_ASSERT_EQUAL(std::string("multiptrfunc"),
+    ASSERT_EQ(std::string("multiptrfunc"),
         std::string(mindirect.symbol()));
 
     //
@@ -2031,8 +2026,8 @@ TestFunctionTypes::testCFunctions()
 #endif
 }
 
-void
-TestFunctionTypes::testCFunctionCF()
+// Test C constant folding
+TEST_F(TestFunctionTypes, testCFunctionCF)
 {
     using openvdb::ax::codegen::CFunction;
     using openvdb::ax::codegen::LLVMType;
@@ -2053,26 +2048,26 @@ TestFunctionTypes::testCFunctionCF()
 
     CFunction<int32_t()> test1("ax.test1", cftest1);
     // off by default
-    CPPUNIT_ASSERT(!test1.hasConstantFold());
-    CPPUNIT_ASSERT(test1.fold({B.getInt32(1)}, C) == nullptr);
+    ASSERT_TRUE(!test1.hasConstantFold());
+    ASSERT_TRUE(test1.fold({B.getInt32(1)}, C) == nullptr);
 
     test1.setConstantFold(true);
     llvm::Value* result = test1.fold({B.getInt32(1)}, C);
-    CPPUNIT_ASSERT(result);
+    ASSERT_TRUE(result);
     llvm::ConstantInt* constant = llvm::dyn_cast<llvm::ConstantInt>(result);
-    CPPUNIT_ASSERT(constant);
-    CPPUNIT_ASSERT_EQUAL(uint64_t(10), constant->getLimitedValue());
+    ASSERT_TRUE(constant);
+    ASSERT_EQ(uint64_t(10), constant->getLimitedValue());
 
     // test with scalar arg
 
     CFunction<float(float)> test2("ax.test2", cftest2);
     test2.setConstantFold(true);
     result = test2.fold({LLVMType<float>::get(C, -3.2f)}, C);
-    CPPUNIT_ASSERT(result);
+    ASSERT_TRUE(result);
     llvm::ConstantFP* constantfp = llvm::dyn_cast<llvm::ConstantFP>(result);
-    CPPUNIT_ASSERT(constantfp);
+    ASSERT_TRUE(constantfp);
     const llvm::APFloat& apf = constantfp->getValueAPF();
-    CPPUNIT_ASSERT_EQUAL(-3.2f, apf.convertToFloat());
+    ASSERT_EQ(-3.2f, apf.convertToFloat());
 
     // test unsupported
 
@@ -2084,9 +2079,9 @@ TestFunctionTypes::testCFunctionCF()
     // its impossible to have a constant ptr, use this for now as this will most
     // likely be the way we support folding for arrays in the future
     llvm::Value* arg = LLVMType<float[3]>::get(C, {1,2,3});
-    CPPUNIT_ASSERT(llvm::isa<llvm::Constant>(arg));
+    ASSERT_TRUE(llvm::isa<llvm::Constant>(arg));
     // check fold fails
-    CPPUNIT_ASSERT(test3.fold({arg}, C) == nullptr);
+    ASSERT_TRUE(test3.fold({arg}, C) == nullptr);
 
     //
 
@@ -2112,8 +2107,8 @@ TestFunctionTypes::testCFunctionCF()
     CPPUNIT_ASSERT(test4.fold({nullfloat}, C) == nullptr);
 }
 
-void
-TestFunctionTypes::testIRFunctions()
+// Test derived IR Function, IRFunctionBase::create and IRFunctionBase::call
+TEST_F(TestFunctionTypes, testIRFunctions)
 {
     using openvdb::ax::codegen::LLVMType;
     using openvdb::ax::codegen::Function;
@@ -2144,7 +2139,7 @@ TestFunctionTypes::testIRFunctions()
                 double(*)[2])>
             mix("mix", generate);
 
-        CPPUNIT_ASSERT_EQUAL(std::string("mix"),
+        ASSERT_EQ(std::string("mix"),
             std::string(mix.symbol()));
 
         ArgInfoVector types;
@@ -2190,11 +2185,33 @@ TestFunctionTypes::testIRFunctions()
         llvm::Module* _M = F->getParent();
         CPPUNIT_ASSERT_EQUAL(&M, _M);
 
-        CPPUNIT_ASSERT_EQUAL(size_t(2), args.size());
-        CPPUNIT_ASSERT(args[0] == llvm::cast<llvm::Value>(F->arg_begin()));
-        CPPUNIT_ASSERT(args[1] == llvm::cast<llvm::Value>(F->arg_begin()+1));
-        CPPUNIT_ASSERT(args[0]->getType()->isFloatTy());
-        CPPUNIT_ASSERT(args[1]->getType()->isFloatTy());
+        // test the builder is pointing to the correct location
+        if (&B == &_B)
+        {
+            throw std::runtime_error("Builder should be different");
+        }
+        llvm::BasicBlock* Block = _B.GetInsertBlock();
+        if (!Block || !Block->empty())
+        {
+            throw std::runtime_error("Basic block should exist and be empty");
+        }
+        llvm::Function* F = Block->getParent();
+        if (!F)
+        {
+            throw std::runtime_error("Function should exist");
+        }
+        EXPECT_EQ(expectedName, std::string(F->getName()));
+        llvm::Module* _M = F->getParent();
+        EXPECT_EQ(&M, _M);
+
+        if (args.size() != 2)
+        {
+            throw std::runtime_error("Function should take two arguments");
+        }
+        EXPECT_TRUE(args[0] == llvm::cast<llvm::Value>(F->arg_begin()));
+        EXPECT_TRUE(args[1] == llvm::cast<llvm::Value>(F->arg_begin()+1));
+        EXPECT_TRUE(args[0]->getType()->isFloatTy());
+        EXPECT_TRUE(args[1]->getType()->isFloatTy());
 
         llvm::Value* result = FunctionBB.CreateFAdd(args[0], args[1]);
         Value val(result, result->getType());
@@ -2217,59 +2234,59 @@ TestFunctionTypes::testIRFunctions()
         expectedName, generate));
 
     // Test function prototype creation
-    CPPUNIT_ASSERT(!M.getFunction("ax.ir.test"));
+    ASSERT_TRUE(!M.getFunction("ax.ir.test"));
     // detached
     function = test->create(C);
     llvm::Function* function2 = test->create(C);
-    CPPUNIT_ASSERT(!M.getFunction("ax.ir.test"));
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT(function != function2);
-    CPPUNIT_ASSERT(!function->isVarArg());
-    CPPUNIT_ASSERT_EQUAL(size_t(2), function->arg_size());
+    ASSERT_TRUE(!M.getFunction("ax.ir.test"));
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(function->empty());
+    ASSERT_TRUE(function != function2);
+    ASSERT_TRUE(!function->isVarArg());
+    ASSERT_EQ(size_t(2), function->arg_size());
 
     llvm::FunctionType* ftype = function->getFunctionType();
-    CPPUNIT_ASSERT(ftype);
-    CPPUNIT_ASSERT(ftype->getReturnType()->isFloatTy());
-    CPPUNIT_ASSERT_EQUAL(2u, ftype->getNumParams());
-    CPPUNIT_ASSERT(ftype->getParamType(0)->isFloatTy());
-    CPPUNIT_ASSERT(ftype->getParamType(1)->isFloatTy());
-    CPPUNIT_ASSERT(function->getAttributes().isEmpty());
+    ASSERT_TRUE(ftype);
+    ASSERT_TRUE(ftype->getReturnType()->isFloatTy());
+    ASSERT_EQ(2u, ftype->getNumParams());
+    ASSERT_TRUE(ftype->getParamType(0)->isFloatTy());
+    ASSERT_TRUE(ftype->getParamType(1)->isFloatTy());
+    ASSERT_TRUE(function->getAttributes().isEmpty());
     delete function;
     delete function2;
 
     // Test function creation with module and IR generation
-    CPPUNIT_ASSERT(!M.getFunction("ax.ir.test"));
+    ASSERT_TRUE(!M.getFunction("ax.ir.test"));
     function = test->create(M);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT_EQUAL(function, M.getFunction("ax.ir.test"));
-    CPPUNIT_ASSERT(!function->empty());
+    ASSERT_TRUE(function);
+    ASSERT_EQ(function, M.getFunction("ax.ir.test"));
+    ASSERT_TRUE(!function->empty());
     llvm::BasicBlock* BB = &(function->getEntryBlock());
     // two instructions - the add and return
-    CPPUNIT_ASSERT_EQUAL(size_t(2), BB->size());
+    ASSERT_EQ(size_t(2), BB->size());
     auto iter = BB->begin();
     llvm::BinaryOperator* binary = llvm::dyn_cast<llvm::BinaryOperator>(iter);
-    CPPUNIT_ASSERT(binary);
-    CPPUNIT_ASSERT_EQUAL(llvm::Instruction::FAdd, binary->getOpcode());
-    CPPUNIT_ASSERT_EQUAL(llvm::cast<llvm::Value>(function->arg_begin()),
+    ASSERT_TRUE(binary);
+    ASSERT_EQ(llvm::Instruction::FAdd, binary->getOpcode());
+    ASSERT_EQ(llvm::cast<llvm::Value>(function->arg_begin()),
         binary->getOperand(0));
-    CPPUNIT_ASSERT_EQUAL(llvm::cast<llvm::Value>(function->arg_begin()+1),
+    ASSERT_EQ(llvm::cast<llvm::Value>(function->arg_begin()+1),
         binary->getOperand(1));
 
     ++iter;
     llvm::ReturnInst* ret = llvm::dyn_cast<llvm::ReturnInst>(iter);
-    CPPUNIT_ASSERT(ret);
+    ASSERT_TRUE(ret);
     llvm::Value* rvalue = ret->getReturnValue();
-    CPPUNIT_ASSERT(rvalue);
-    CPPUNIT_ASSERT(rvalue->getType()->isFloatTy());
+    ASSERT_TRUE(rvalue);
+    ASSERT_TRUE(rvalue->getType()->isFloatTy());
     // the return is the result of the bin op
-    CPPUNIT_ASSERT_EQUAL(rvalue, llvm::cast<llvm::Value>(binary));
+    ASSERT_EQ(rvalue, llvm::cast<llvm::Value>(binary));
 
     ++iter;
-    CPPUNIT_ASSERT(BB->end() == iter);
+    ASSERT_TRUE(BB->end() == iter);
 
     // additional call should match
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
+    ASSERT_EQ(function, test->create(M));
     // verify IR
     VERIFY_FUNCTION_IR(function);
 
@@ -2280,14 +2297,14 @@ TestFunctionTypes::testIRFunctions()
     llvm::Value* result = test->call({fp1, fp2}, B);
     CPPUNIT_ASSERT(result);
     llvm::CallInst* call = llvm::dyn_cast<llvm::CallInst>(result);
-    CPPUNIT_ASSERT(call);
-    CPPUNIT_ASSERT_EQUAL(function, call->getCalledFunction());
-    CPPUNIT_ASSERT_EQUAL(2u, getNumArgFromCallInst(call));
-    CPPUNIT_ASSERT_EQUAL(fp1, call->getArgOperand(0));
-    CPPUNIT_ASSERT_EQUAL(fp2, call->getArgOperand(1));
+    ASSERT_TRUE(call);
+    ASSERT_EQ(function, call->getCalledFunction());
+    ASSERT_EQ(2u, getNumArgFromCallInst(call));
+    ASSERT_EQ(fp1, call->getArgOperand(0));
+    ASSERT_EQ(fp2, call->getArgOperand(1));
     // Test the builder is pointing to the correct location
-    CPPUNIT_ASSERT_EQUAL(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
-    CPPUNIT_ASSERT_EQUAL(llvm::cast<llvm::Value>(call),
+    ASSERT_EQ(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
+    ASSERT_EQ(llvm::cast<llvm::Value>(call),
         llvm::cast<llvm::Value>(--B.GetInsertPoint()));
 
     // verify IR
@@ -2313,41 +2330,41 @@ TestFunctionTypes::testIRFunctions()
     result = test->call({fp1, fp2}, B);
     CPPUNIT_ASSERT(result);
     call = llvm::dyn_cast<llvm::CallInst>(result);
-    CPPUNIT_ASSERT(call);
+    ASSERT_TRUE(call);
     function = M.getFunction("ax.ir.autoret.test");
-    CPPUNIT_ASSERT_EQUAL(function, call->getCalledFunction());
-    CPPUNIT_ASSERT_EQUAL(2u, getNumArgFromCallInst(call));
-    CPPUNIT_ASSERT_EQUAL(fp1, call->getArgOperand(0));
-    CPPUNIT_ASSERT_EQUAL(fp2, call->getArgOperand(1));
+    ASSERT_EQ(function, call->getCalledFunction());
+    ASSERT_EQ(2u, getNumArgFromCallInst(call));
+    ASSERT_EQ(fp1, call->getArgOperand(0));
+    ASSERT_EQ(fp2, call->getArgOperand(1));
 
-    CPPUNIT_ASSERT(!function->empty());
+    ASSERT_TRUE(!function->empty());
     BB = &(function->getEntryBlock());
     // two instructions - the add and return
-    CPPUNIT_ASSERT_EQUAL(size_t(2), BB->size());
+    ASSERT_EQ(size_t(2), BB->size());
     iter = BB->begin();
     binary = llvm::dyn_cast<llvm::BinaryOperator>(iter);
-    CPPUNIT_ASSERT(binary);
-    CPPUNIT_ASSERT_EQUAL(llvm::Instruction::FAdd, binary->getOpcode());
-    CPPUNIT_ASSERT_EQUAL(llvm::cast<llvm::Value>(function->arg_begin()),
+    ASSERT_TRUE(binary);
+    ASSERT_EQ(llvm::Instruction::FAdd, binary->getOpcode());
+    ASSERT_EQ(llvm::cast<llvm::Value>(function->arg_begin()),
         binary->getOperand(0));
-    CPPUNIT_ASSERT_EQUAL(llvm::cast<llvm::Value>(function->arg_begin()+1),
+    ASSERT_EQ(llvm::cast<llvm::Value>(function->arg_begin()+1),
         binary->getOperand(1));
 
     ++iter;
     ret = llvm::dyn_cast<llvm::ReturnInst>(iter);
-    CPPUNIT_ASSERT(ret);
+    ASSERT_TRUE(ret);
     rvalue = ret->getReturnValue();
-    CPPUNIT_ASSERT(rvalue);
-    CPPUNIT_ASSERT(rvalue->getType()->isFloatTy());
+    ASSERT_TRUE(rvalue);
+    ASSERT_TRUE(rvalue->getType()->isFloatTy());
     // the return is the result of the bin op
-    CPPUNIT_ASSERT_EQUAL(rvalue, llvm::cast<llvm::Value>(binary));
+    ASSERT_EQ(rvalue, llvm::cast<llvm::Value>(binary));
 
     ++iter;
-    CPPUNIT_ASSERT(BB->end() == iter);
+    ASSERT_TRUE(BB->end() == iter);
 
     // Test the builder is pointing to the correct location
-    CPPUNIT_ASSERT_EQUAL(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
-    CPPUNIT_ASSERT_EQUAL(llvm::cast<llvm::Value>(call),
+    ASSERT_EQ(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
+    ASSERT_EQ(llvm::cast<llvm::Value>(call),
         llvm::cast<llvm::Value>(--B.GetInsertPoint()));
 
     // verify
@@ -2366,45 +2383,45 @@ TestFunctionTypes::testIRFunctions()
         ArgInfo(llvm::Type::getFloatTy(C)),
         expectedName, generate));
 
-    CPPUNIT_ASSERT(!M.getFunction("ax.ir.retnull.test"));
+    ASSERT_TRUE(!M.getFunction("ax.ir.retnull.test"));
     // will throw as the function expects a float ret, not void or null
     // NOTE: The function will still be created, but be in an invaid state
-    CPPUNIT_ASSERT_THROW(test->create(M), openvdb::AXCodeGenError);
+    ASSERT_THROW(test->create(M), openvdb::AXCodeGenError);
     function = M.getFunction("ax.ir.retnull.test");
-    CPPUNIT_ASSERT(function);
+    ASSERT_TRUE(function);
 
     result = test->call({fp1, fp2}, B);
     CPPUNIT_ASSERT(result);
     call = llvm::dyn_cast<llvm::CallInst>(result);
-    CPPUNIT_ASSERT(call);
-    CPPUNIT_ASSERT_EQUAL(function, call->getCalledFunction());
-    CPPUNIT_ASSERT_EQUAL(2u, getNumArgFromCallInst(call));
-    CPPUNIT_ASSERT_EQUAL(fp1, call->getArgOperand(0));
-    CPPUNIT_ASSERT_EQUAL(fp2, call->getArgOperand(1));
+    ASSERT_TRUE(call);
+    ASSERT_EQ(function, call->getCalledFunction());
+    ASSERT_EQ(2u, getNumArgFromCallInst(call));
+    ASSERT_EQ(fp1, call->getArgOperand(0));
+    ASSERT_EQ(fp2, call->getArgOperand(1));
 
     BB = &(function->getEntryBlock());
     // two instructions - the add and return
-    CPPUNIT_ASSERT_EQUAL(size_t(2), BB->size());
+    ASSERT_EQ(size_t(2), BB->size());
     iter = BB->begin();
     binary = llvm::dyn_cast<llvm::BinaryOperator>(iter);
-    CPPUNIT_ASSERT(binary);
-    CPPUNIT_ASSERT_EQUAL(llvm::Instruction::FAdd, binary->getOpcode());
-    CPPUNIT_ASSERT_EQUAL(llvm::cast<llvm::Value>(function->arg_begin()),
+    ASSERT_TRUE(binary);
+    ASSERT_EQ(llvm::Instruction::FAdd, binary->getOpcode());
+    ASSERT_EQ(llvm::cast<llvm::Value>(function->arg_begin()),
         binary->getOperand(0));
-    CPPUNIT_ASSERT_EQUAL(llvm::cast<llvm::Value>(function->arg_begin()+1),
+    ASSERT_EQ(llvm::cast<llvm::Value>(function->arg_begin()+1),
         binary->getOperand(1));
 
     ++iter;
     ret = llvm::dyn_cast<llvm::ReturnInst>(iter);
-    CPPUNIT_ASSERT(ret);
-    CPPUNIT_ASSERT(!ret->getReturnValue());
+    ASSERT_TRUE(ret);
+    ASSERT_TRUE(!ret->getReturnValue());
 
     ++iter;
-    CPPUNIT_ASSERT(BB->end() == iter);
+    ASSERT_TRUE(BB->end() == iter);
 
     // Test the builder is pointing to the correct location
-    CPPUNIT_ASSERT_EQUAL(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
-    CPPUNIT_ASSERT_EQUAL(llvm::cast<llvm::Value>(call),
+    ASSERT_EQ(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
+    ASSERT_EQ(llvm::cast<llvm::Value>(call),
         llvm::cast<llvm::Value>(--B.GetInsertPoint()));
 
     // verify - function is invalid as it returns void but the
@@ -2420,6 +2437,10 @@ TestFunctionTypes::testIRFunctions()
         (const Arguments& args,
          llvm::IRBuilder<>& FunctionBB) -> Value
     {
+        // NOTE: GTest's ASSERT_* macros create a 'return;' statement
+        // which errors here. Exceptions are being used instead to
+        // exit early.
+
         // test the builder is pointing to the correct location
         // note, for embedded IR, the same builder will be used
         CPPUNIT_ASSERT_EQUAL(&B, &FunctionBB);
@@ -2427,12 +2448,18 @@ TestFunctionTypes::testIRFunctions()
         CPPUNIT_ASSERT(Block);
         CPPUNIT_ASSERT(!Block->empty());
         llvm::Function* F = Block->getParent();
-        CPPUNIT_ASSERT(F);
-        CPPUNIT_ASSERT_EQUAL(std::string("TestFunction"), std::string(F->getName()));
-        CPPUNIT_ASSERT_EQUAL(&M, F->getParent());
-        CPPUNIT_ASSERT_EQUAL(size_t(2), args.size());
-        CPPUNIT_ASSERT(args[0]->getType()->isFloatTy());
-        CPPUNIT_ASSERT(args[1]->getType()->isFloatTy());
+        if (!F)
+        {
+            throw std::runtime_error("Function should exist");
+        }
+        EXPECT_EQ(std::string("TestFunction"), std::string(F->getName()));
+        EXPECT_EQ(&M, F->getParent());
+        if (args.size() != 2)
+        {
+            throw std::runtime_error("Function should take two arguments");
+        }
+        EXPECT_TRUE(args[0]->getType()->isFloatTy());
+        EXPECT_TRUE(args[1]->getType()->isFloatTy());
         // Can't just do a CreateFAdd as the IR builder won't actually even
         // write the instruction as its const and unused - so store in a new
         // alloc
@@ -2451,8 +2478,8 @@ TestFunctionTypes::testIRFunctions()
     static_cast<IRFunctionBase&>(*test).setEmbedIR(true);
 
     // test create does nothing
-    CPPUNIT_ASSERT(test->create(C) == nullptr);
-    CPPUNIT_ASSERT(test->create(M) == nullptr);
+    ASSERT_TRUE(test->create(C) == nullptr);
+    ASSERT_TRUE(test->create(M) == nullptr);
 
     // test call
     CPPUNIT_ASSERT(!M.getFunction("ax.ir.embed.test"));
@@ -2461,15 +2488,15 @@ TestFunctionTypes::testIRFunctions()
     CPPUNIT_ASSERT(!M.getFunction("ax.ir.embed.test"));
     auto IP = B.GetInsertPoint();
     // check the prev instructions are as expected
-    CPPUNIT_ASSERT(llvm::isa<llvm::LoadInst>(--IP));
-    CPPUNIT_ASSERT(llvm::isa<llvm::StoreInst>(--IP));
-    CPPUNIT_ASSERT(llvm::isa<llvm::AllocaInst>(--IP));
+    ASSERT_TRUE(llvm::isa<llvm::LoadInst>(--IP));
+    ASSERT_TRUE(llvm::isa<llvm::StoreInst>(--IP));
+    ASSERT_TRUE(llvm::isa<llvm::AllocaInst>(--IP));
     // Test the builder is pointing to the correct location
-    CPPUNIT_ASSERT_EQUAL(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
+    ASSERT_EQ(&(BaseFunction->getEntryBlock()), B.GetInsertBlock());
 }
 
-void
-TestFunctionTypes::testSRETFunctions()
+// Test SRET methods for both C and IR functions
+TEST_F(TestFunctionTypes, testSRETFunctions)
 {
     using openvdb::ax::codegen::LLVMType;
     using openvdb::ax::codegen::Function;
@@ -2520,14 +2547,14 @@ TestFunctionTypes::testSRETFunctions()
     CPPUNIT_ASSERT(type.IsReturn());
 #endif
     // test various getters
-    CPPUNIT_ASSERT_EQUAL(std::string("ax.c.test"), std::string(test->symbol()));
-    CPPUNIT_ASSERT_EQUAL(size_t(1), test->size());
-    CPPUNIT_ASSERT_EQUAL(std::string(""), std::string(test->argName(0)));
+    ASSERT_EQ(std::string("ax.c.test"), std::string(test->symbol()));
+    ASSERT_EQ(size_t(1), test->size());
+    ASSERT_EQ(std::string(""), std::string(test->argName(0)));
 
     // test printing
     os.str("");
     test->print(C, os, "name", /*axtypes=*/true);
-    CPPUNIT_ASSERT_EQUAL(std::string("vec3f name()"), os.str());
+    ASSERT_EQ(std::string("vec3f name()"), os.str());
 
     // test match
 #if LLVM_VERSION_MAJOR <= 15
@@ -2547,14 +2574,14 @@ TestFunctionTypes::testSRETFunctions()
 #endif
 
     // test create
-    CPPUNIT_ASSERT(!M.getFunction("ax.c.test"));
+    ASSERT_TRUE(!M.getFunction("ax.c.test"));
     function = test->create(M);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(M.getFunction("ax.c.test"));
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT_EQUAL(size_t(1), function->arg_size());
-    CPPUNIT_ASSERT(function->getAttributes().isEmpty());
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(M.getFunction("ax.c.test"));
+    ASSERT_EQ(function, test->create(M));
+    ASSERT_TRUE(function->empty());
+    ASSERT_EQ(size_t(1), function->arg_size());
+    ASSERT_TRUE(function->getAttributes().isEmpty());
 
     ftype = function->getFunctionType();
     CPPUNIT_ASSERT(ftype);
@@ -2596,20 +2623,20 @@ TestFunctionTypes::testSRETFunctions()
     CPPUNIT_ASSERT(type.IsReturn());
 #endif
     // test various getters
-    CPPUNIT_ASSERT_EQUAL(std::string("ax.c2.test"), std::string(test->symbol()));
-    CPPUNIT_ASSERT_EQUAL(size_t(2), test->size());
-    CPPUNIT_ASSERT_EQUAL(std::string(""), std::string(test->argName(0)));
-    CPPUNIT_ASSERT_EQUAL(std::string(""), std::string(test->argName(1)));
+    ASSERT_EQ(std::string("ax.c2.test"), std::string(test->symbol()));
+    ASSERT_EQ(size_t(2), test->size());
+    ASSERT_EQ(std::string(""), std::string(test->argName(0)));
+    ASSERT_EQ(std::string(""), std::string(test->argName(1)));
 
     // test printing
     os.str("");
     test->print(C, os, "name", /*axtypes=*/true);
-    CPPUNIT_ASSERT_EQUAL(std::string("vec3f name(vec3f)"), os.str());
+    ASSERT_EQ(std::string("vec3f name(vec3f)"), os.str());
 
     // test match
 #if LLVM_VERSION_MAJOR <= 15
     match = test->match({vec3f->getPointerTo(),vec3f->getPointerTo()}, C);
-    CPPUNIT_ASSERT_EQUAL(match, Function::None);
+    ASSERT_EQ(match, Function::None);
     match = test->match({vec3f->getPointerTo()}, C);
     CPPUNIT_ASSERT_EQUAL(match, Function::Explicit);
     match = test->match(std::vector<llvm::Type*>{}, C);
@@ -2628,14 +2655,14 @@ TestFunctionTypes::testSRETFunctions()
 #endif
 
     // test create
-    CPPUNIT_ASSERT(!M.getFunction("ax.c2.test"));
+    ASSERT_TRUE(!M.getFunction("ax.c2.test"));
     function = test->create(M);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT(M.getFunction("ax.c2.test"));
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
-    CPPUNIT_ASSERT(function->empty());
-    CPPUNIT_ASSERT_EQUAL(size_t(2), function->arg_size());
-    CPPUNIT_ASSERT(function->getAttributes().isEmpty());
+    ASSERT_TRUE(function);
+    ASSERT_TRUE(M.getFunction("ax.c2.test"));
+    ASSERT_EQ(function, test->create(M));
+    ASSERT_TRUE(function->empty());
+    ASSERT_EQ(size_t(2), function->arg_size());
+    ASSERT_TRUE(function->getAttributes().isEmpty());
 
     ftype = function->getFunctionType();
     CPPUNIT_ASSERT(ftype);
@@ -2710,14 +2737,14 @@ TestFunctionTypes::testSRETFunctions()
     CPPUNIT_ASSERT(type.IsVoid());
 #endif
     // test various getters
-    CPPUNIT_ASSERT_EQUAL(std::string("ax.ir.test"), std::string(test->symbol()));
-    CPPUNIT_ASSERT_EQUAL(size_t(1), test->size());
-    CPPUNIT_ASSERT_EQUAL(std::string(""), std::string(test->argName(0)));
+    ASSERT_EQ(std::string("ax.ir.test"), std::string(test->symbol()));
+    ASSERT_EQ(size_t(1), test->size());
+    ASSERT_EQ(std::string(""), std::string(test->argName(0)));
 
     // test printing
     os.str("");
     test->print(C, os, "name", /*axtypes=*/true);
-    CPPUNIT_ASSERT_EQUAL(std::string("vec3f name()"), os.str());
+    ASSERT_EQ(std::string("vec3f name()"), os.str());
 
     // test match
 #if LLVM_VERSION_MAJOR <= 15
@@ -2737,25 +2764,25 @@ TestFunctionTypes::testSRETFunctions()
 #endif
 
     // test create
-    CPPUNIT_ASSERT(!M.getFunction("ax.ir.test"));
+    ASSERT_TRUE(!M.getFunction("ax.ir.test"));
     function = test->create(M);
-    CPPUNIT_ASSERT(function);
-    CPPUNIT_ASSERT_EQUAL(function, M.getFunction("ax.ir.test"));
-    CPPUNIT_ASSERT(!function->empty());
+    ASSERT_TRUE(function);
+    ASSERT_EQ(function, M.getFunction("ax.ir.test"));
+    ASSERT_TRUE(!function->empty());
 
     // test instructions
     llvm::BasicBlock* BB = &(function->getEntryBlock());
-    CPPUNIT_ASSERT_EQUAL(size_t(3), BB->size());
+    ASSERT_EQ(size_t(3), BB->size());
     auto iter = BB->begin();
-    CPPUNIT_ASSERT(llvm::isa<llvm::GetElementPtrInst>(iter++));
-    CPPUNIT_ASSERT(llvm::isa<llvm::StoreInst>(iter++));
-    CPPUNIT_ASSERT(llvm::isa<llvm::ReturnInst>(iter++));
-    CPPUNIT_ASSERT(BB->end() == iter);
+    ASSERT_TRUE(llvm::isa<llvm::GetElementPtrInst>(iter++));
+    ASSERT_TRUE(llvm::isa<llvm::StoreInst>(iter++));
+    ASSERT_TRUE(llvm::isa<llvm::ReturnInst>(iter++));
+    ASSERT_TRUE(BB->end() == iter);
 
     // additional call should match
-    CPPUNIT_ASSERT_EQUAL(function, test->create(M));
-    CPPUNIT_ASSERT_EQUAL(size_t(1), function->arg_size());
-    CPPUNIT_ASSERT(function->getAttributes().isEmpty());
+    ASSERT_EQ(function, test->create(M));
+    ASSERT_EQ(size_t(1), function->arg_size());
+    ASSERT_TRUE(function->getAttributes().isEmpty());
 
     // check function type
 
