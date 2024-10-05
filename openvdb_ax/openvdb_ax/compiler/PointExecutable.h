@@ -172,7 +172,9 @@ public:
 
 private:
     friend class Compiler;
-    friend class ::TestPointExecutable;
+    
+    FRIEND_TEST(TestPointExecutable, testConstructionDestruction);
+    FRIEND_TEST(TestPointExecutable, testAttributeCodecs);
 
     /// @brief  Private method used in the unit tests
     bool usesAcceleratedKernel(const points::PointDataTree& tree) const;
