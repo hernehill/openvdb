@@ -1,7 +1,7 @@
 name = "openvdb"
 
 # version 11.0.0 is used by Houdini 20.5.278
-version = "11.0.0.hh.1.2.0"
+version = "11.0.0.hh.1.3.0"
 
 authors = [
     "DreamWorks & AcademySoftwareFoundation",
@@ -16,7 +16,7 @@ with scope("config") as c:
 
 requires = [
     "blosc-1.17",
-    "tbb-2020",
+    "tbb-2022",
     "boost-1.82",
     "openexr-3.1.12",
     "pybind11",  # only required if building with Python
