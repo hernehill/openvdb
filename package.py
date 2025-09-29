@@ -16,7 +16,7 @@ with scope("config") as c:
 
 requires = [
     "blosc-1.17",
-    "tbb-2022",
+    "tbb-2022.2",
     "boost-1.82",
     "openexr-3.1.12",
     "pybind11",  # only required if building with Python
