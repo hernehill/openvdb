@@ -15,9 +15,10 @@ with scope("config") as c:
     c.release_packages_path = os.environ["HH_REZ_REPO_RELEASE_EXT"]
 
 requires = [
+    "visual_studio",
     "blosc-1.17",
     "tbb-2021.9",
-    "boost-1.82",
+    "boost-1.90.0",
     "openexr-3.1.12",
     "pybind11",  # only required if building with Python
 ]
@@ -30,11 +31,9 @@ private_build_requires = []
 # within CMakeLists.txt. This is so we can still have this openvdb version available
 # for Python 3.7, but without 'pyopenvdb' support.
 variants = [
-    # ["python-3.7", "numpy-1.21.6"],
     ["python-3.9", "numpy-1.26.4"],
     ["python-3.10", "numpy-1.26.4"],
     ["python-3.11", "numpy-1.26.4"],
-    # ["python-3.12", "numpy-1.26.4"],
 ]
 
 
@@ -43,22 +42,19 @@ def commands():
     env.OPENVDB_ROOT = "{root}"
     env.OPENVDB_LOCATION = "{root}"
     env.OPENVDB_INCLUDE_DIR = "{root}/include"
-    env.OPENVDB_LIBRARY_DIR = "{root}/lib64"
+    env.OPENVDB_LIBRARY_DIR = "{root}/lib"
 
     env.PATH.append("{root}/bin")
-    env.LD_LIBRARY_PATH.append("{root}/lib64")
+    env.PATH.append("{root}/lib")
 
     if "python" in resolve:
         python_ver = resolve["python"].version
         if python_ver.major == 3:
             if python_ver.minor == 9:
-                env.PYTHONPATH.append("{root}/lib64/python3.9/site-packages")
+                env.PYTHONPATH.append("{root}/lib/python3.9/site-packages")
             elif python_ver.minor == 10:
-                env.PYTHONPATH.append("{root}/lib64/python3.10/site-packages")
+                env.PYTHONPATH.append("{root}/lib/python3.10/site-packages")
             elif python_ver.minor == 11:
-                env.PYTHONPATH.append("{root}/lib64/python3.11/site-packages")
-            elif python_ver.minor == 12:
-                env.PYTHONPATH.append("{root}/lib64/python3.12/site-packages")
-
+                env.PYTHONPATH.append("{root}/lib/python3.11/site-packages")
 
 uuid = "repository.openvdb"
