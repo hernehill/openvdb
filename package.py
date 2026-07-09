@@ -18,7 +18,7 @@ requires = [
     "visual_studio",
     "blosc-1.17",
     "tbb-2021.9",
-    "boost-1.90.0",
+    "boost-1.82.0",
     "openexr-3.1.12",
     "pybind11",  # only required if building with Python
 ]
