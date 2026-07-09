@@ -1,7 +1,7 @@
 name = "openvdb"
 
 # version 11.0.0 is used by Houdini 20.5.278
-version = "11.0.0.hh.1.3.1"
+version = "11.0.0.hh.1.4.0"
 
 authors = [
     "DreamWorks & AcademySoftwareFoundation",
