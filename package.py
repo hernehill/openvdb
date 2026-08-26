@@ -15,7 +15,6 @@ with scope("config") as c:
     c.release_packages_path = os.environ["HH_REZ_REPO_RELEASE_EXT"]
 
 requires = [
-    "visual_studio",
     "blosc-1.17",
     "tbb-2021.9",
     "boost-1.82.0",
@@ -23,7 +22,9 @@ requires = [
     "pybind11",  # only required if building with Python
 ]
 
-private_build_requires = []
+private_build_requires = [
+    "visual_studio",
+]
 
 
 # NOTE: openvdb 11+ requires Python 3.9+. Although we are building a REZ variant
@@ -52,9 +53,12 @@ def commands():
         if python_ver.major == 3:
             if python_ver.minor == 9:
                 env.PYTHONPATH.append("{root}/lib/python3.9/site-packages")
+                env.UE_PYTHONPATH.append("{root}/lib/python3.9/site-packages")
             elif python_ver.minor == 10:
                 env.PYTHONPATH.append("{root}/lib/python3.10/site-packages")
+                env.UE_PYTHONPATH.append("{root}/lib/python3.10/site-packages")
             elif python_ver.minor == 11:
                 env.PYTHONPATH.append("{root}/lib/python3.11/site-packages")
+                env.UE_PYTHONPATH.append("{root}/lib/python3.11/site-packages")
 
 uuid = "repository.openvdb"
