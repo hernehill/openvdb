@@ -1,7 +1,7 @@
 name = "openvdb"
 
 # version 11.0.0 is used by Houdini 20.5.278
-version = "11.0.0.hh.1.4.1"
+version = "11.0.0.hh.1.4.2"
 
 authors = [
     "DreamWorks & AcademySoftwareFoundation",
@@ -46,7 +46,8 @@ def commands():
     env.OPENVDB_LIBRARY_DIR = "{root}/lib"
 
     env.PATH.append("{root}/bin")
-    env.PATH.append("{root}/lib")
+    env.LD_LIBRARY_PATH.append("{root}/bin")
+    env.LIB.append("{root}/lib")
 
     if "python" in resolve:
         python_ver = resolve["python"].version
