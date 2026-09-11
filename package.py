@@ -36,29 +36,14 @@ variants = [
 
 def pre_build_commands():
     import os
-    import subprocess
 
-    # nanobind is a rez-pip package, so it has no CMake config of its own on
-    # CMAKE_PREFIX_PATH. Ask nanobind (via the resolved python) where its
-    # bundled nanobindConfig.cmake lives and add that to CMAKE_PREFIX_PATH so
-    # find_package(nanobind ...) in CMakeLists.txt can locate it.
+    # nanobind's rez-pip package only exports PYTHONPATH; CMake's
+    # find_package(nanobind CONFIG) needs its cmake/ dir on CMAKE_PREFIX_PATH.
     if "nanobind" in resolve and "python" in resolve:
-        try:
-            nanobind_cmake_dir = subprocess.check_output(
-                ["python", "-m", "nanobind", "--cmake_dir"],
-                universal_newlines=True,
-            ).strip()
-        except (subprocess.CalledProcessError, OSError) as e:
-            raise RuntimeError(
-                "Failed to determine nanobind CMake directory: {}".format(e)
-            )
-
-        if not nanobind_cmake_dir or not os.path.isdir(nanobind_cmake_dir):
-            raise RuntimeError(
-                "nanobind CMake directory not found: '{}'".format(nanobind_cmake_dir)
-            )
-
-        env.CMAKE_PREFIX_PATH.append(nanobind_cmake_dir)
+        for p in str(env.PYTHONPATH).split(os.pathsep):
+            cmake_dir = os.path.join(p, "nanobind", "cmake")
+            if os.path.isdir(cmake_dir):
+                env.CMAKE_PREFIX_PATH.append(cmake_dir)
 
 
 def commands():
