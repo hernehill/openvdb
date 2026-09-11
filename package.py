@@ -1,7 +1,7 @@
 name = "openvdb"
 
-# version 11.0.0 is used by Houdini 20.5.278
-version = "11.0.0.hh.1.4.2"
+# version 12.0 is used by Maya 2026.3
+version = "12.0.1.hh.1.0.0"
 
 authors = [
     "DreamWorks & AcademySoftwareFoundation",
