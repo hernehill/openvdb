@@ -19,7 +19,7 @@ requires = [
     "tbb-2021.9",
     "boost-1.82.0",
     "openexr-3.1.12",
-    "pybind11",  # only required if building with Python
+    "nanobind",  # only required if building with Python
 ]
 
 private_build_requires = [
@@ -27,15 +27,38 @@ private_build_requires = [
 ]
 
 
-# NOTE: openvdb 11+ requires Python 3.9+. Although we are building a REZ variant
-# for Python 3.7, we will disable the 'OPENVDB_BUILD_PYTHON_MODULE' CMake option
-# within CMakeLists.txt. This is so we can still have this openvdb version available
-# for Python 3.7, but without 'pyopenvdb' support.
+# NOTE: openvdb 12+ requires Python 3.10+. 
 variants = [
-    ["python-3.9", "numpy-1.26.4"],
+    # ["python-3.9", "numpy-1.26.4"],
     ["python-3.10", "numpy-1.26.4"],
     ["python-3.11", "numpy-1.26.4"],
 ]
+
+def pre_build_commands():
+    import os
+    import subprocess
+
+    # nanobind is a rez-pip package, so it has no CMake config of its own on
+    # CMAKE_PREFIX_PATH. Ask nanobind (via the resolved python) where its
+    # bundled nanobindConfig.cmake lives and add that to CMAKE_PREFIX_PATH so
+    # find_package(nanobind ...) in CMakeLists.txt can locate it.
+    if "nanobind" in resolve and "python" in resolve:
+        try:
+            nanobind_cmake_dir = subprocess.check_output(
+                ["python", "-m", "nanobind", "--cmake_dir"],
+                universal_newlines=True,
+            ).strip()
+        except (subprocess.CalledProcessError, OSError) as e:
+            raise RuntimeError(
+                "Failed to determine nanobind CMake directory: {}".format(e)
+            )
+
+        if not nanobind_cmake_dir or not os.path.isdir(nanobind_cmake_dir):
+            raise RuntimeError(
+                "nanobind CMake directory not found: '{}'".format(nanobind_cmake_dir)
+            )
+
+        env.CMAKE_PREFIX_PATH.append(nanobind_cmake_dir)
 
 
 def commands():
